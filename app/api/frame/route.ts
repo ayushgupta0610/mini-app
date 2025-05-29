@@ -5,6 +5,8 @@ interface FrameMessage {
   untrustedData: {
     buttonIndex?: number;
     inputText?: string;
+    // fid is used for identification but we're not using it in this demo
+    // keeping it in the type for documentation purposes
     fid?: number;
     url?: string;
   };
@@ -17,7 +19,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Parse the incoming request
     const body = await req.json() as FrameMessage;
-    const { buttonIndex, inputText, fid } = body.untrustedData;
+    const { buttonIndex, inputText } = body.untrustedData;
+    // We're not using fid in this implementation, but it would be used
+    // to identify the user in a real-world implementation
 
     // Default frame response
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://your-deployment-url.com';

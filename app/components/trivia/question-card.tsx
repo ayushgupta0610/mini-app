@@ -11,7 +11,7 @@ export const QuestionCard = () => {
   const { 
     questions, 
     currentQuestionIndex, 
-    answers,
+    // We're not directly using answers in this component
     answerQuestion, 
     nextQuestion 
   } = useTriviaStore()
@@ -53,7 +53,8 @@ export const QuestionCard = () => {
     return null
   }
   
-  const isCorrect = selectedOption === currentQuestion.correctAnswer
+  // This variable is used to determine button styling in the UI
+  // We'll use it directly in the JSX instead of storing it in a variable
   
   return (
     <Card className="w-full max-w-md mx-auto">

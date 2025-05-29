@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+// No React hooks needed for this component
 import { motion } from "framer-motion"
 import { useTriviaStore } from "@/app/lib/store"
 import { createFrameMessage } from "@/app/lib/farcaster"
