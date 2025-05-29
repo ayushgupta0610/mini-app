@@ -6,6 +6,8 @@ import { useTriviaStore } from "@/app/lib/store"
 import { Button } from "@/app/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card"
 import { Progress } from "@/app/components/ui/progress"
+import { Check, X } from "lucide-react"
+import { cn } from "@/app/lib/utils"
 
 export const QuestionCard = () => {
   const { 
@@ -41,6 +43,14 @@ export const QuestionCard = () => {
     setIsAnswered(true)
     answerQuestion(optionIndex)
     setShowFeedback(true)
+    
+    // Add a slight delay before showing the Next button for better UX
+    setTimeout(() => {
+      const nextButton = document.getElementById('next-question-button')
+      if (nextButton) {
+        nextButton.focus()
+      }
+    }, 500)
   }
   
   // Handle next question
@@ -72,43 +82,62 @@ export const QuestionCard = () => {
       </CardHeader>
       
       <CardContent className="space-y-3">
-        {currentQuestion.options.map((option, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <Button
-              variant={
-                showFeedback
-                  ? index === currentQuestion.correctAnswer
-                    ? "default"
-                    : selectedOption === index
-                    ? "destructive"
-                    : "outline"
-                  : selectedOption === index
-                  ? "default"
-                  : "outline"
-              }
-              className="w-full justify-start text-left h-auto py-3 mb-2"
-              onClick={() => handleOptionSelect(index)}
-              disabled={isAnswered}
+        {currentQuestion.options.map((option, index) => {
+          const isCorrect = index === currentQuestion.correctAnswer
+          const isSelected = selectedOption === index
+          const isIncorrect = isSelected && !isCorrect && showFeedback
+          
+          return (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
             >
-              {option}
-            </Button>
-          </motion.div>
-        ))}
+              <Button
+                variant={isSelected ? "default" : "outline"}
+                className={cn(
+                  "w-full justify-between text-left h-auto py-4 px-5 mb-2 transition-all duration-200 relative",
+                  isSelected && "ring-2 ring-primary",
+                  showFeedback && isCorrect && "bg-[var(--success)] text-[var(--success-foreground)] hover:bg-[var(--success)]/90",
+                  isIncorrect && "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                )}
+                onClick={() => handleOptionSelect(index)}
+                disabled={isAnswered}
+              >
+                <span className="mr-2">{option}</span>
+                {showFeedback && (
+                  <span className="flex items-center justify-center">
+                    {isCorrect ? (
+                      <Check className="h-5 w-5" />
+                    ) : (
+                      isIncorrect && <X className="h-5 w-5" />
+                    )}
+                  </span>
+                )}
+              </Button>
+            </motion.div>
+          )
+        })}
       </CardContent>
       
-      <CardFooter>
+      <CardFooter className="flex justify-center">
         {showFeedback && (
-          <Button 
-            onClick={handleNextQuestion} 
-            className="w-full mt-2"
+          <motion.div 
+            className="w-full" 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
           >
-            {currentQuestionIndex === questions.length - 1 ? "See Results" : "Next Question"}
-          </Button>
+            <Button 
+              id="next-question-button"
+              onClick={handleNextQuestion} 
+              className="w-full mt-4 py-5 text-base font-medium shadow-md hover:shadow-lg transition-all"
+              size="lg"
+            >
+              {currentQuestionIndex === questions.length - 1 ? "See Results" : "Next Question"}
+            </Button>
+          </motion.div>
         )}
       </CardFooter>
     </Card>
