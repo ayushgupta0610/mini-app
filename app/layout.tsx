@@ -44,8 +44,9 @@ export default function RootLayout({
         />
         <meta
           property="og:description"
-          content="Test your crypto knowledge a nd discover when you should have entered the space!"
+          content="Test your crypto knowledge and discover when you should have entered the space!"
         />
+        <meta property="fc:frame" content="vNext" />
         <meta
           property="fc:frame:image"
           content={`${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`}
@@ -54,6 +55,7 @@ export default function RootLayout({
           property="fc:frame:post_url"
           content={`${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`}
         />
+        <meta property="fc:frame:button:1" content="Start Quiz" />
         <meta property="og:type" content="website" />
         <meta
           property="og:url"
