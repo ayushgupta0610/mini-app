@@ -7,9 +7,9 @@
   "frame": {
     "version": "1",
     "name": "Crypto Trivia",
-    "iconUrl": "https://mini-app-theta-roan.vercel.app/crypto-icon.png",
+    "iconUrl": "https://mini-app-theta-roan.vercel.app/icon.png",
     "homeUrl": "https://mini-app-theta-roan.vercel.app/",
-    "splashImageUrl": "https://mini-app-theta-roan.vercel.app/crypto-icon.png",
+    "splashImageUrl": "https://mini-app-theta-roan.vercel.app/splash-image-1.jpeg",
     "splashBackgroundColor": "#8c66fc",
     "primaryCategory": "games",
     "description": "Test your crypto knowledge with this fun trivia quiz",
@@ -17,7 +17,7 @@
     "tagline": "Test your crypto knowledge",
     "ogTitle": "Crypto Trivia",
     "ogDescription": "Test your crypto knowledge and discover when you should have entered the space!",
-    "ogImageUrl": "https://mini-app-theta-roan.vercel.app/og-image.png",
+    "ogImageUrl": "https://mini-app-theta-roan.vercel.app/splash-image.png",
     "tags": ["crypto", "trivia", "quiz", "games", "farcaster"]
   }
 }
