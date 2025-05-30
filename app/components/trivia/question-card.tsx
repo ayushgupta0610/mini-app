@@ -98,6 +98,31 @@ export const QuestionCard = () => {
     nextQuestion();
   };
 
+  // Auto-advance timer reference
+  const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Set up auto-advance timer when feedback is shown
+  useEffect(() => {
+    if (showFeedback) {
+      // Clear any existing timer
+      if (autoAdvanceTimerRef.current) {
+        clearTimeout(autoAdvanceTimerRef.current);
+      }
+      
+      // Set new timer for auto-advance after 3 seconds
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        handleNextQuestion();
+      }, 3000);
+    }
+    
+    return () => {
+      // Clean up timer on unmount or when feedback changes
+      if (autoAdvanceTimerRef.current) {
+        clearTimeout(autoAdvanceTimerRef.current);
+      }
+    };
+  }, [showFeedback]);
+
   // If no questions are loaded yet
   if (!currentQuestion) {
     return null;
@@ -140,7 +165,7 @@ export const QuestionCard = () => {
               : "bg-primary"
           )}
         />
-        <CardTitle className="text-xl">{currentQuestion.question}</CardTitle>
+        <CardTitle className="text-xl break-words whitespace-normal">{currentQuestion.question}</CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-3">
@@ -170,7 +195,7 @@ export const QuestionCard = () => {
                 onClick={() => handleOptionSelect(index)}
                 disabled={isAnswered}
               >
-                <span className="mr-2">{option}</span>
+                <span className="mr-2 break-words whitespace-normal w-full block">{option}</span>
                 {showFeedback && (
                   <span className="flex items-center justify-center">
                     {isCorrect ? (
@@ -197,12 +222,23 @@ export const QuestionCard = () => {
             <Button
               id="next-question-button"
               onClick={handleNextQuestion}
-              className="w-full mt-4 py-5 text-base font-medium shadow-md hover:shadow-lg transition-all"
+              className="w-full mt-4 py-5 text-base font-medium shadow-md hover:shadow-lg transition-all relative overflow-hidden group"
               size="lg"
+              variant="default"
             >
-              {currentQuestionIndex === questions.length - 1
-                ? "See Results"
-                : "Next Question"}
+              <div className="flex items-center justify-center space-x-2">
+                <span>
+                  {currentQuestionIndex === questions.length - 1
+                    ? "See Results"
+                    : "Next Question"}
+                </span>
+                <motion.div 
+                  className="h-1 w-full absolute bottom-0 left-0 bg-primary/30"
+                  initial={{ width: '100%' }}
+                  animate={{ width: '0%' }}
+                  transition={{ duration: 3, ease: 'linear' }}
+                />
+              </div>
             </Button>
           </motion.div>
         )}
