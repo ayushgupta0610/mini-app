@@ -133,9 +133,9 @@ export const QuestionCard = () => {
           value={(timeLeft / 5) * 100}
           className="mb-4"
           indicatorClassName={cn(
-            timeLeft <= 2
+            timeLeft < 1
               ? "bg-destructive"
-              : timeLeft <= 4
+              : timeLeft <= 5
               ? "bg-amber-500"
               : "bg-primary"
           )}
