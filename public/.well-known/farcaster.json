@@ -1,15 +1,20 @@
 {
+  "accountAssociation": {
+    "header": "YOUR_HEADER_FROM_MANIFEST_TOOL",
+    "payload": "YOUR_PAYLOAD_FROM_MANIFEST_TOOL",
+    "signature": "YOUR_SIGNATURE_FROM_MANIFEST_TOOL"
+  },
   "frame": {
     "version": "1",
     "name": "Crypto Trivia",
-    "developer": "Ayush Gupta",
-    "developerFid": "@ayushgupta",
     "iconUrl": "https://mini-app-theta-roan.vercel.app/logo.png",
     "homeUrl": "https://mini-app-theta-roan.vercel.app/",
     "imageUrl": "https://mini-app-theta-roan.vercel.app/og-image.png",
     "buttonTitle": "Start Quiz",
     "splashImageUrl": "https://mini-app-theta-roan.vercel.app/logo.png",
     "splashBackgroundColor": "#f5f0ec",
+    "primaryCategory": "games",
+    "description": "Test your crypto knowledge with this fun trivia quiz",
     "requiredCapabilities": ["wallet.getEthereumProvider", "actions.signIn"]
   }
 }

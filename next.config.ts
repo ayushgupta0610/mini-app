@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
       process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
   },
   images: {
-    domains: ["localhost"],
+    domains: [`${process.env.NEXT_PUBLIC_BASE_URL}`, "localhost"],
     formats: ["image/webp"],
   },
   async headers() {
