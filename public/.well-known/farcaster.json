@@ -10,7 +10,6 @@
     "buttonTitle": "Start Quiz",
     "splashImageUrl": "https://mini-app-theta-roan.vercel.app/logo.png",
     "splashBackgroundColor": "#f5f0ec",
-    "requiredChains": ["eip155:8453"],
     "requiredCapabilities": ["wallet.getEthereumProvider", "actions.signIn"]
   }
 }
