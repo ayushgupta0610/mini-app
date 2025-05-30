@@ -28,7 +28,7 @@ export const TriviaApp = () => {
 
       notifyReady();
     }
-  }, [questions.length, showWelcome]);
+  }, [questions.length, isComplete, showWelcome]);
 
   // Call ready() once if questions are already populated on initial mount
   // and welcome screen should be skipped

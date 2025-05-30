@@ -303,7 +303,7 @@ export const calculateCryptoEntryYear = (
   // Calculate percentage score
   const percentageScore = (score / totalQuestions) * 100;
 
-  // Map percentage to a year (2013-2023 range)
+  // Map percentage to a year (2013-2025 range)
   // Higher score = earlier entry (more knowledgeable about early crypto)
   if (percentageScore >= 90) return 2013; // OG crypto knowledge
   if (percentageScore >= 80) return 2015;
@@ -312,5 +312,5 @@ export const calculateCryptoEntryYear = (
   if (percentageScore >= 50) return 2020; // DeFi summer
   if (percentageScore >= 40) return 2021; // NFT boom
   if (percentageScore >= 30) return 2022; // Bear market
-  return 2023; // Crypto newbie
+  return 2025; // Crypto newbie
 };

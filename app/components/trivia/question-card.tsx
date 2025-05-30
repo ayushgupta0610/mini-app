@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useTriviaStore } from "@/app/lib/store";
 import { Button } from "@/app/components/ui/button";
@@ -29,6 +29,7 @@ export const QuestionCard = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [timeLeft, setTimeLeft] = useState(5); // 5 seconds per question
   const [isTimerActive, setIsTimerActive] = useState(true);
+  const [timedOut, setTimedOut] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get current question
@@ -44,6 +45,7 @@ export const QuestionCard = () => {
     setShowFeedback(false);
     setTimeLeft(5); // Reset timer to 5 seconds
     setIsTimerActive(true);
+    setTimedOut(false);
   }, [currentQuestionIndex]);
 
   // Timer effect
@@ -53,15 +55,14 @@ export const QuestionCard = () => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (timeLeft === 0 && isTimerActive) {
-      // Time's up, auto-select the correct answer
+      // Time's up, mark as incorrect (do not increment score)
       setIsTimerActive(false);
       if (!isAnswered) {
-        // Auto-select the correct answer when time runs out
-        const correctAnswer = currentQuestion.correctAnswer;
-        setSelectedOption(correctAnswer);
         setIsAnswered(true);
-        answerQuestion(correctAnswer);
         setShowFeedback(true);
+        setTimedOut(true);
+        setSelectedOption(null); // No option selected
+        // Do NOT call answerQuestion here!
       }
     }
 
@@ -78,6 +79,7 @@ export const QuestionCard = () => {
 
     // Stop the timer when an option is selected
     setIsTimerActive(false);
+    setTimedOut(false);
 
     setSelectedOption(optionIndex);
     setIsAnswered(true);
@@ -94,9 +96,9 @@ export const QuestionCard = () => {
   };
 
   // Handle next question
-  const handleNextQuestion = () => {
+  const handleNextQuestion = useCallback(() => {
     nextQuestion();
-  };
+  }, [nextQuestion]);
 
   // Auto-advance timer reference
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -108,20 +110,25 @@ export const QuestionCard = () => {
       if (autoAdvanceTimerRef.current) {
         clearTimeout(autoAdvanceTimerRef.current);
       }
+
+      // Determine timing based on answer correctness
+      // 3 seconds for correct answers, 5 seconds for incorrect/timeout
+      const isCorrectAnswer = selectedOption !== null && selectedOption === currentQuestion.correctAnswer;
+      const advanceDelay = isCorrectAnswer ? 3000 : 5000;
       
-      // Set new timer for auto-advance after 3 seconds
+      // Set new timer for auto-advance
       autoAdvanceTimerRef.current = setTimeout(() => {
         handleNextQuestion();
-      }, 3000);
+      }, advanceDelay);
     }
-    
+
     return () => {
       // Clean up timer on unmount or when feedback changes
       if (autoAdvanceTimerRef.current) {
         clearTimeout(autoAdvanceTimerRef.current);
       }
     };
-  }, [showFeedback]);
+  }, [showFeedback, handleNextQuestion, selectedOption, currentQuestion]);
 
   // If no questions are loaded yet
   if (!currentQuestion) {
@@ -165,7 +172,9 @@ export const QuestionCard = () => {
               : "bg-primary"
           )}
         />
-        <CardTitle className="text-xl break-words whitespace-normal">{currentQuestion.question}</CardTitle>
+        <CardTitle className="text-xl break-words whitespace-normal">
+          {currentQuestion.question}
+        </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-3">
@@ -173,6 +182,8 @@ export const QuestionCard = () => {
           const isCorrect = index === currentQuestion.correctAnswer;
           const isSelected = selectedOption === index;
           const isIncorrect = isSelected && !isCorrect && showFeedback;
+          // Highlight correct answer if timed out
+          const isTimeoutHighlight = timedOut && isCorrect && showFeedback;
 
           return (
             <motion.div
@@ -188,14 +199,20 @@ export const QuestionCard = () => {
                   isSelected && "ring-2 ring-primary",
                   showFeedback &&
                     isCorrect &&
+                    (isSelected || isTimeoutHighlight) &&
                     "bg-[var(--success)] text-[var(--success-foreground)] hover:bg-[var(--success)]/90",
                   isIncorrect &&
-                    "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+                  isTimeoutHighlight &&
+                    !isSelected &&
+                    "ring-2 ring-[var(--success)]"
                 )}
                 onClick={() => handleOptionSelect(index)}
                 disabled={isAnswered}
               >
-                <span className="mr-2 break-words whitespace-normal w-full block">{option}</span>
+                <span className="mr-2 break-words whitespace-normal w-full block">
+                  {option}
+                </span>
                 {showFeedback && (
                   <span className="flex items-center justify-center">
                     {isCorrect ? (
@@ -219,6 +236,12 @@ export const QuestionCard = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
           >
+            {timedOut && (
+              <div className="text-center text-destructive mb-2 text-base font-medium flex items-center justify-center gap-2">
+                <span className="inline-flex items-center justify-center bg-destructive text-destructive-foreground w-6 h-6 rounded-full">✗</span>
+                <span>Time&apos;s up! The correct answer is highlighted.</span>
+              </div>
+            )}
             <Button
               id="next-question-button"
               onClick={handleNextQuestion}
@@ -232,11 +255,14 @@ export const QuestionCard = () => {
                     ? "See Results"
                     : "Next Question"}
                 </span>
-                <motion.div 
+                <motion.div
                   className="h-1 w-full absolute bottom-0 left-0 bg-primary/30"
-                  initial={{ width: '100%' }}
-                  animate={{ width: '0%' }}
-                  transition={{ duration: 3, ease: 'linear' }}
+                  initial={{ width: "100%" }}
+                  animate={{ width: "0%" }}
+                  transition={{ 
+                    duration: selectedOption !== null && selectedOption === currentQuestion.correctAnswer ? 3 : 5, 
+                    ease: "linear" 
+                  }}
                 />
               </div>
             </Button>
