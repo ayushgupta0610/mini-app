@@ -37,17 +37,17 @@ export default function RootLayout({
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=1"
         />
-        <meta property="og:title" content="Crypto Trivia" />
+        <meta name="og:title" content="Crypto Trivia" />
         <meta
-          property="og:image"
+          name="og:image"
           content={`${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`}
         />
         <meta
-          property="og:description"
+          name="og:description"
           content="Test your crypto knowledge and discover when you should have entered the space!"
         />
         <meta
-          property="fc:frame"
+          name="fc:frame"
           content={JSON.stringify({
             version: "next",
             imageUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`,
@@ -58,16 +58,13 @@ export default function RootLayout({
                 name: "Crypto Trivia",
                 url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
                 splashImageUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`,
-                splashBackgroundColor: "#f5f0ec"
-              }
-            }
+                splashBackgroundColor: "#f5f0ec",
+              },
+            },
           })}
         />
-        <meta property="og:type" content="website" />
-        <meta
-          property="og:url"
-          content={`${process.env.NEXT_PUBLIC_BASE_URL}`}
-        />
+        <meta name="og:type" content="website" />
+        <meta name="og:url" content={`${process.env.NEXT_PUBLIC_BASE_URL}`} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
