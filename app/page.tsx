@@ -4,7 +4,8 @@ import { TriviaApp } from "./components/trivia/trivia-app";
 
 export const metadata: Metadata = {
   title: "Crypto Trivia | Farcaster Mini App",
-  description: "Test your crypto knowledge and discover when you should have entered the space!",
+  description:
+    "Test your crypto knowledge and discover when you should have entered the space!",
 };
 
 export default function Home() {
@@ -21,17 +22,15 @@ export default function Home() {
           />
           <h1 className="text-xl font-bold">Crypto Trivia</h1>
         </div>
-        <div className="text-sm text-muted-foreground">
-          Farcaster Mini App
-        </div>
+        <div className="text-sm text-muted-foreground">Farcaster Mini App</div>
       </header>
-      
+
       <main className="w-full">
         <TriviaApp />
       </main>
-      
+
       <footer className="mt-8 text-center text-sm text-muted-foreground">
-        <p>Created with ❤️ for the Farcaster community</p>
+        <p>Created with ❤️ by @ayushgupta0610</p>
       </footer>
     </div>
   );

@@ -130,7 +130,7 @@ export const useTriviaStore = create<TriviaState>()(
           return false;
         }
 
-        // Check if user has reached the limit of 3 plays per day
+        // Check if user has reached the limit of 10 plays per day
         return user.dailyPlays.count >= 10;
       },
 
