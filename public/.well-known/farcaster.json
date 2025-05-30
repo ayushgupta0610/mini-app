@@ -1,23 +1,18 @@
 {
-  "accountAssociation": {
-    "header": "<BASE64-JFS-HEADER>",
-    "payload": "<BASE64-JFS-PAYLOAD-{\"domain\":\"mini-app-theta-roan.vercel.app\"}>",
-    "signature": "<BASE64-JFS-SIGNATURE>"
-  },
   "frame": {
     "version": "1",
     "name": "Crypto Trivia",
-    "iconUrl": "https://mini-app-theta-roan.vercel.app/logo.png",
+    "iconUrl": "https://mini-app-theta-roan.vercel.app/crypto-icon.png",
     "homeUrl": "https://mini-app-theta-roan.vercel.app/",
-    "imageUrl": "https://mini-app-theta-roan.vercel.app/og-image.png",
-    "buttonTitle": "Start Quiz",
-    "splashImageUrl": "https://mini-app-theta-roan.vercel.app/logo.png",
-    "splashBackgroundColor": "#f5f0ec",
+    "splashImageUrl": "https://mini-app-theta-roan.vercel.app/crypto-icon.png",
+    "splashBackgroundColor": "#8c66fc",
     "primaryCategory": "games",
     "description": "Test your crypto knowledge with this fun trivia quiz",
+    "subtitle": "Crypto Quiz Game",
+    "tagline": "Test your crypto knowledge",
     "ogTitle": "Crypto Trivia",
     "ogDescription": "Test your crypto knowledge and discover when you should have entered the space!",
     "ogImageUrl": "https://mini-app-theta-roan.vercel.app/og-image.png",
-    "requiredCapabilities": ["wallet.getEthereumProvider", "actions.signIn"]
+    "tags": ["crypto", "trivia", "quiz", "games", "farcaster"]
   }
 }
