@@ -16,13 +16,12 @@ export const metadata: Metadata = {
   title: "Crypto Trivia | Farcaster Mini App",
   description:
     "Test your crypto knowledge and discover when you should have entered the space!",
-  openGraph: {
-    title: "Crypto Trivia",
-    description:
-      "Test your crypto knowledge and discover when you should have entered the space!",
-    images: [`${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`],
-    type: "website",
-    url: process.env.NEXT_PUBLIC_BASE_URL,
+  // Farcaster Frame metadata
+  other: {
+    "fc:frame": "vNext",
+    "fc:frame:image": `${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`,
+    "fc:frame:button:1": "Start Quiz",
+    "fc:frame:post_url": `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
   },
 };
 
