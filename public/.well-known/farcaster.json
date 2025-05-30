@@ -1,8 +1,8 @@
 {
   "accountAssociation": {
-    "header": "<BASE64-JFS-HEADER>",
-    "payload": "<BASE64-JFS-PAYLOAD-{\"domain\":\"mini-app-theta-roan.vercel.app\"}",
-    "signature": "<BASE64-JFS-SIGNATURE>"
+    "header": "eyJmaWQiOjI2MTY3MiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDFDY0IzODQzNTI3OTA5QjkyMDRCZTVFNDQ1MDc0RDA5OTM3NkQxZTUifQ",
+    "payload": "eyJkb21haW4iOiJtaW5pLWFwcC10aGV0YS1yb2FuLnZlcmNlbC5hcHAifQ",
+    "signature": "MHgyMDM4YWI4NzZiZmUyMjk0Mzg3NTdiN2NiNDRhYmVhYTFiY2U4NmJjYmExYzAyOGQ2NzM5M2M4ODE4MjBmZTVjNzZlM2IxODlmMTM0ZjQwMDM1N2NlYjhlZGJlYmQ3M2ViODI1Yzc2ZjZlOWM0Y2IyMjkyMWZhZjU4M2MzNjAwOTFi"
   },
   "frame": {
     "version": "1",
