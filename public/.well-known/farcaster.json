@@ -1,9 +1,4 @@
 {
-  "accountAssociation": {
-    "header": "YOUR_HEADER_FROM_MANIFEST_TOOL",
-    "payload": "YOUR_PAYLOAD_FROM_MANIFEST_TOOL",
-    "signature": "YOUR_SIGNATURE_FROM_MANIFEST_TOOL"
-  },
   "frame": {
     "version": "1",
     "name": "Crypto Trivia",
@@ -18,7 +13,6 @@
     "ogTitle": "Crypto Trivia",
     "ogDescription": "Test your crypto knowledge and discover when you should have entered the space!",
     "ogImageUrl": "https://mini-app-theta-roan.vercel.app/og-image.png",
-    "requiredCapabilities": ["wallet.getEthereumProvider", "actions.signIn"],
-    "domain": "mini-app-theta-roan.vercel.app"
+    "requiredCapabilities": ["wallet.getEthereumProvider", "actions.signIn"]
   }
 }

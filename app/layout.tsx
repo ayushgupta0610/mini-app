@@ -46,16 +46,23 @@ export default function RootLayout({
           property="og:description"
           content="Test your crypto knowledge and discover when you should have entered the space!"
         />
-        <meta property="fc:frame" content="vNext" />
         <meta
-          property="fc:frame:image"
-          content={`${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`}
+          property="fc:frame"
+          content={JSON.stringify({
+            version: "next",
+            imageUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`,
+            button: {
+              title: "Start Quiz",
+              action: {
+                type: "launch_frame",
+                name: "Crypto Trivia",
+                url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
+                splashImageUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`,
+                splashBackgroundColor: "#f5f0ec"
+              }
+            }
+          })}
         />
-        <meta
-          property="fc:frame:post_url"
-          content={`${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`}
-        />
-        <meta property="fc:frame:button:1" content="Start Quiz" />
         <meta property="og:type" content="website" />
         <meta
           property="og:url"
