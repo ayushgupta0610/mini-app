@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   // Farcaster Frame metadata
   other: {
     "fc:frame": "vNext",
-    "fc:frame:image": "https://mini-app-theta-roan.vercel.app/og-image.png",
+    "fc:frame:image": `${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`,
     "fc:frame:button:1": "Start Quiz",
-    "fc:frame:post_url": "https://mini-app-theta-roan.vercel.app/api/frame",
+    "fc:frame:post_url": `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
   },
 };
 
@@ -36,6 +36,28 @@ export default function RootLayout({
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=1"
+        />
+        <meta property="og:title" content="Crypto Trivia" />
+        <meta
+          property="og:image"
+          content={`${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`}
+        />
+        <meta
+          property="og:description"
+          content="Test your crypto knowledge a nd discover when you should have entered the space!"
+        />
+        <meta
+          property="fc:frame:image"
+          content={`${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`}
+        />
+        <meta
+          property="fc:frame:post_url"
+          content={`${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`}
+        />
+        <meta property="og:type" content="website" />
+        <meta
+          property="og:url"
+          content={`${process.env.NEXT_PUBLIC_BASE_URL}`}
         />
       </head>
       <body
