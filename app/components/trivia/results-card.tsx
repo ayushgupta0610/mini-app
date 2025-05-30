@@ -16,10 +16,8 @@ export const ResultsCard = () => {
     entryYear, 
     resetQuiz, 
     isAuthenticated,
-    user,
     castScore,
-    hasReachedDailyLimit,
-    checkDailyLimit
+    hasReachedDailyLimit
   } = useTriviaStore()
   
   const [isCasting, setIsCasting] = useState(false)
@@ -72,8 +70,8 @@ export const ResultsCard = () => {
     alert("Your result has been shared!")
   }
   
-  // Check if user has reached daily limit
-  const hasReachedLimit = checkDailyLimit()
+  // Use the hasReachedDailyLimit from store
+  const hasReachedLimit = hasReachedDailyLimit
   
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -173,7 +171,7 @@ export const ResultsCard = () => {
         
         {hasReachedLimit && (
           <div className="mt-2 p-3 bg-amber-500/10 text-amber-500 rounded-md text-sm text-center">
-            You've reached the daily limit of 3 quizzes. Come back tomorrow for more!
+            You&apos;ve reached the daily limit of 3 quizzes. Come back tomorrow for more!
           </div>
         )}
       </CardFooter>

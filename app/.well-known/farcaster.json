@@ -2,6 +2,8 @@
   "frame": {
     "version": "1",
     "name": "Crypto Trivia",
+    "developer": "Ayush Gupta",
+    "developerFid": "@ayushgupta",
     "iconUrl": "https://mini-app-theta-roan.vercel.app/logo.png",
     "homeUrl": "https://mini-app-theta-roan.vercel.app/",
     "imageUrl": "https://mini-app-theta-roan.vercel.app/og-image.png",

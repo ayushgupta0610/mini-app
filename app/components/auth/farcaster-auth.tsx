@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useTriviaStore } from "@/app/lib/store";
 import { Button } from "@/app/components/ui/button";
@@ -26,7 +27,7 @@ export const FarcasterAuth = () => {
     setError(null);
 
     try {
-      // @ts-ignore - Farcaster API is not typed
+      // @ts-expect-error - Farcaster API is not typed
       const response = await window.farcaster.signIn();
       
       if (response && response.success) {
@@ -60,9 +61,11 @@ export const FarcasterAuth = () => {
           <CardTitle className="text-lg flex items-center gap-2">
             <div className="w-6 h-6 rounded-full overflow-hidden">
               {user.pfp && (
-                <img 
-                  src={user.pfp} 
-                  alt={user.displayName || user.username || "User"} 
+                <Image
+                  src={user.pfp}
+                  alt={user.displayName || user.username || "User"}
+                  width={24}
+                  height={24}
                   className="w-full h-full object-cover"
                 />
               )}

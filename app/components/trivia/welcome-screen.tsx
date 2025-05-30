@@ -20,7 +20,6 @@ export const WelcomeScreen = () => {
     isAuthenticated,
     user,
     checkDailyLimit,
-    hasReachedDailyLimit,
   } = useTriviaStore();
 
   // Check if user has reached daily limit
@@ -108,7 +107,7 @@ export const WelcomeScreen = () => {
               className="mt-4 text-center text-sm"
             >
               <p className="text-muted-foreground">
-                You've played{" "}
+                You&apos;ve played{" "}
                 <span className="font-medium text-foreground">
                   {user.dailyPlays.count}/3
                 </span>{" "}
@@ -126,7 +125,7 @@ export const WelcomeScreen = () => {
             >
               <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
               <p className="text-sm">
-                You've reached the daily limit of 3 quizzes. Come back tomorrow
+                You&apos;ve reached the daily limit of 3 quizzes. Come back tomorrow
                 for more!
               </p>
             </motion.div>
