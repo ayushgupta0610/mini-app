@@ -45,7 +45,7 @@ This app can be deployed to any platform that supports Next.js, such as Vercel o
 For Farcaster Frame integration, make sure to update the following environment variables:
 
 ```
-NEXT_PUBLIC_BASE_URL=https://your-deployment-url.com
+NEXT_PUBLIC_BASE_URL=https://mini-app-theta-roan.vercel.app
 ```
 
 Also update the Frame metadata in `app/layout.tsx` with your deployment URL.

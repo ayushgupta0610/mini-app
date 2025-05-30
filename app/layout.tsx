@@ -14,13 +14,14 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Crypto Trivia | Farcaster Mini App",
-  description: "Test your crypto knowledge and discover when you should have entered the space!",
+  description:
+    "Test your crypto knowledge and discover when you should have entered the space!",
   // Farcaster Frame metadata
   other: {
     "fc:frame": "vNext",
-    "fc:frame:image": "https://your-deployment-url.com/og-image.png",
+    "fc:frame:image": "https://mini-app-theta-roan.vercel.app/og-image.png",
     "fc:frame:button:1": "Start Quiz",
-    "fc:frame:post_url": "https://your-deployment-url.com/api/frame",
+    "fc:frame:post_url": "https://mini-app-theta-roan.vercel.app/api/frame",
   },
 };
 
@@ -32,7 +33,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1"
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
