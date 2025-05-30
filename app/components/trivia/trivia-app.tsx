@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 // Import the SDK from frame-sdk
 import { sdk } from "@farcaster/frame-sdk";
 import { useTriviaStore } from "@/app/lib/store";
@@ -10,14 +10,13 @@ import { ResultsCard } from "./results-card";
 
 export const TriviaApp = () => {
   const { questions, isComplete, initializeQuiz } = useTriviaStore();
+  // Add state to control whether to show welcome screen
+  const [showWelcome, setShowWelcome] = useState(true);
 
-  // Initialize the app on first load
+  // Only initialize the SDK when app is ready
   useEffect(() => {
-    if (questions.length === 0) {
-      initializeQuiz(10);
-      // Questions are being initialized, not ready yet.
-    } else {
-      // Questions are loaded, now we are ready.
+    // Only notify ready when we have questions (after welcome screen is dismissed)
+    if (questions.length > 0 && !showWelcome) {
       const notifyReady = async () => {
         try {
           await sdk.actions.ready();
@@ -29,12 +28,15 @@ export const TriviaApp = () => {
 
       notifyReady();
     }
-  }, [questions.length, initializeQuiz]);
+  }, [questions.length, showWelcome]);
 
   // Call ready() once if questions are already populated on initial mount
-  // (e.g. from persisted state) and not going through the initialization path above.
+  // and welcome screen should be skipped
   useEffect(() => {
-    if (questions.length > 0) {
+    // If we have questions from a previous session, skip welcome screen
+    if (questions.length > 0 && isComplete === false) {
+      setShowWelcome(false);
+      
       const notifyReady = async () => {
         try {
           await sdk.actions.ready();
@@ -48,9 +50,15 @@ export const TriviaApp = () => {
     }
   }, []); // Run only once on mount
 
-  // Show welcome screen if no questions
-  if (questions.length === 0) {
-    return <WelcomeScreen />;
+  // Show welcome screen if showWelcome is true
+  if (showWelcome) {
+    return <WelcomeScreen onStart={() => {
+      setShowWelcome(false);
+      // Initialize quiz when user clicks start
+      if (questions.length === 0) {
+        initializeQuiz(10);
+      }
+    }} />;
   }
 
   // Show results if quiz is complete

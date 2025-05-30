@@ -14,7 +14,11 @@ import {
 import { FarcasterAuth } from "@/app/components/auth/farcaster-auth";
 import { AlertCircle, Play } from "lucide-react";
 
-export const WelcomeScreen = () => {
+interface WelcomeScreenProps {
+  onStart?: () => void;
+}
+
+export const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
   const { initializeQuiz, isAuthenticated, user, checkDailyLimit } =
     useTriviaStore();
 
@@ -23,6 +27,11 @@ export const WelcomeScreen = () => {
 
   const handleStart = () => {
     initializeQuiz(8); // Start with 8 questions
+    
+    // Call the onStart callback if provided
+    if (onStart) {
+      onStart();
+    }
   };
 
   const categories = [
