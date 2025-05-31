@@ -262,7 +262,12 @@ export const triviaQuestions: TriviaQuestion[] = [
   },
 ];
 
-export const getRandomQuestions = (count: number = 8): TriviaQuestion[] => {
+/**
+ * Gets random questions from the static question bank
+ * @param count Number of questions to return
+ * @returns Array of TriviaQuestion objects
+ */
+export const getRandomStaticQuestions = (count: number = 8): TriviaQuestion[] => {
   // Ensure we get questions from each category
   const categories = [
     "development",
@@ -294,6 +299,67 @@ export const getRandomQuestions = (count: number = 8): TriviaQuestion[] => {
 
   // Shuffle the final selection to mix categories
   return selectedQuestions.sort(() => 0.5 - Math.random());
+};
+
+/**
+ * Gets dynamic questions from the server-side API endpoint
+ * Each subsequent question will be from an earlier year based on difficulty
+ * @param count Number of questions to return
+ * @param difficulty Difficulty level (easy, medium, hard)
+ * @returns Promise resolving to array of TriviaQuestion objects
+ */
+export const getDynamicQuestionsFromAPI = async (
+  count: number = 8,
+  difficulty: "easy" | "medium" | "hard" = "medium"
+): Promise<TriviaQuestion[]> => {
+  try {
+    const response = await fetch('/api/generate-questions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ count, difficulty }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.questions;
+  } catch (error) {
+    console.error("Error fetching questions from API:", error);
+    // Fallback to static questions if API fails
+    return getRandomStaticQuestions(count);
+  }
+};
+
+/**
+ * Gets random questions - either from API or static bank
+ * @param count Number of questions to return
+ * @param options Configuration options
+ * @returns Promise resolving to array of TriviaQuestion objects
+ */
+export const getRandomQuestions = async (
+  count: number = 8,
+  options?: {
+    useDynamicQuestions?: boolean;
+    difficulty?: "easy" | "medium" | "hard";
+  }
+): Promise<TriviaQuestion[]> => {
+  const { useDynamicQuestions = false, difficulty = "medium" } = options || {};
+
+  if (useDynamicQuestions) {
+    try {
+      return await getDynamicQuestionsFromAPI(count, difficulty);
+    } catch (error) {
+      console.error("Failed to get dynamic questions, falling back to static questions:", error);
+      return getRandomStaticQuestions(count);
+    }
+  }
+
+  // Default to static questions
+  return getRandomStaticQuestions(count);
 };
 
 export const calculateCryptoEntryYear = (

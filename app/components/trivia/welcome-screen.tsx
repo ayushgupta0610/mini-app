@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { useTriviaStore } from "@/app/lib/store";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -12,25 +13,56 @@ import {
   CardDescription,
 } from "@/app/components/ui/card";
 import { FarcasterAuth } from "@/app/components/auth/farcaster-auth";
-import { AlertCircle, Play } from "lucide-react";
+import { TriviaSettings } from "./trivia-settings";
+import { AlertCircle, Play, Loader2, Settings } from "lucide-react";
 
 interface WelcomeScreenProps {
   onStart?: () => void;
+  isLoading?: boolean;
 }
 
-export const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
-  const { initializeQuiz, isAuthenticated, user, checkDailyLimit } =
-    useTriviaStore();
+export const WelcomeScreen = ({
+  onStart,
+  isLoading: externalLoading,
+}: WelcomeScreenProps) => {
+  // const router = useRouter();
+  const {
+    initializeQuiz,
+    isAuthenticated,
+    user,
+    checkDailyLimit,
+    isLoading,
+    useDynamicQuestions,
+    difficulty,
+  } = useTriviaStore();
+  const [isStarting, setIsStarting] = useState(false);
+  // Combine local and external loading states
+  const isButtonLoading = isStarting || isLoading || externalLoading;
+  const [showSettings, setShowSettings] = useState(false);
 
   // Check if user has reached daily limit
   const hasReachedLimit = checkDailyLimit();
 
-  const handleStart = () => {
-    initializeQuiz(8); // Start with 8 questions
-    
-    // Call the onStart callback if provided
-    if (onStart) {
-      onStart();
+  const handleStart = async () => {
+    setIsStarting(true);
+
+    try {
+      // Initialize the quiz with 8 questions
+      // Use dynamic questions if enabled
+      await initializeQuiz(8, {
+        useDynamicQuestions,
+        difficulty,
+      });
+
+      // Instead of navigating, just call the onStart callback
+      // This will update the UI state without changing the URL
+      if (onStart) {
+        onStart();
+      }
+    } catch (error) {
+      console.error("Error starting quiz:", error);
+    } finally {
+      setIsStarting(false);
     }
   };
 
@@ -143,12 +175,35 @@ export const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
           onClick={handleStart}
           className="w-full"
           size="lg"
-          disabled={hasReachedLimit}
+          disabled={hasReachedLimit || isButtonLoading}
         >
-          <Play className="h-5 w-5 mr-2" />
-          Start Quiz
+          {isButtonLoading ? (
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Loading Questions...
+            </>
+          ) : (
+            <>
+              <Play className="h-5 w-5 mr-2" />
+              Start Quiz
+            </>
+          )}
         </Button>
       </CardFooter>
+
+      {/* Settings Dialog */}
+      <div className="absolute top-4 right-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowSettings(true)}
+          title="Settings"
+        >
+          <Settings className="h-5 w-5" />
+        </Button>
+      </div>
+
+      <TriviaSettings open={showSettings} onOpenChange={setShowSettings} />
     </Card>
   );
 };

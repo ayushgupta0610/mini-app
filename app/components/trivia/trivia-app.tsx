@@ -7,11 +7,15 @@ import { useTriviaStore } from "@/app/lib/store";
 import { WelcomeScreen } from "./welcome-screen";
 import { QuestionCard } from "./question-card";
 import { ResultsCard } from "./results-card";
+import { usePathname } from "next/navigation";
 
 export const TriviaApp = () => {
   const { questions, isComplete, initializeQuiz } = useTriviaStore();
   // Add state to control whether to show welcome screen
   const [showWelcome, setShowWelcome] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  // const router = useRouter();
+  const pathname = usePathname();
 
   // Only initialize the SDK when app is ready
   useEffect(() => {
@@ -30,13 +34,26 @@ export const TriviaApp = () => {
     }
   }, [questions.length, isComplete, showWelcome]);
 
+  // Handle URL cleanup if we somehow ended up with /quiz in the URL
+  useEffect(() => {
+    if (
+      pathname.includes("/quiz") &&
+      window.history &&
+      window.history.replaceState
+    ) {
+      // Replace the current URL with the base URL without changing browser history
+      const baseUrl = window.location.origin;
+      window.history.replaceState({}, document.title, baseUrl);
+    }
+  }, [pathname]);
+
   // Call ready() once if questions are already populated on initial mount
   // and welcome screen should be skipped
   useEffect(() => {
     // If we have questions from a previous session, skip welcome screen
     if (questions.length > 0 && isComplete === false) {
       setShowWelcome(false);
-      
+
       const notifyReady = async () => {
         try {
           await sdk.actions.ready();
@@ -48,17 +65,31 @@ export const TriviaApp = () => {
 
       notifyReady();
     }
-  }, []); // Run only once on mount
+  }, []); // Run only once on mount (Resolve the dependency issue)
 
   // Show welcome screen if showWelcome is true
   if (showWelcome) {
-    return <WelcomeScreen onStart={() => {
-      setShowWelcome(false);
-      // Initialize quiz when user clicks start
-      if (questions.length === 0) {
-        initializeQuiz(10);
-      }
-    }} />;
+    return (
+      <WelcomeScreen
+        onStart={async () => {
+          setIsLoading(true);
+          setShowWelcome(false);
+          // Initialize quiz when user clicks start
+          if (questions.length === 0) {
+            try {
+              await initializeQuiz(10);
+            } catch (error) {
+              console.error("Failed to initialize quiz:", error);
+            } finally {
+              setIsLoading(false);
+            }
+          } else {
+            setIsLoading(false);
+          }
+        }}
+        isLoading={isLoading}
+      />
+    );
   }
 
   // Show results if quiz is complete
