@@ -10,12 +10,24 @@ import { ResultsCard } from "./results-card";
 import { usePathname } from "next/navigation";
 
 export const TriviaApp = () => {
-  const { questions, isComplete, initializeQuiz } = useTriviaStore();
+  const {
+    questions,
+    isComplete,
+    initializeQuiz,
+    setUseDynamicQuestions,
+    setDifficulty,
+  } = useTriviaStore();
   // Add state to control whether to show welcome screen
   const [showWelcome, setShowWelcome] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   // const router = useRouter();
   const pathname = usePathname();
+
+  // Enable dynamic questions by default
+  useEffect(() => {
+    setUseDynamicQuestions(true);
+    setDifficulty("medium");
+  }, [setUseDynamicQuestions, setDifficulty]);
 
   // Only initialize the SDK when app is ready
   useEffect(() => {
@@ -77,7 +89,10 @@ export const TriviaApp = () => {
           // Initialize quiz when user clicks start
           if (questions.length === 0) {
             try {
-              await initializeQuiz(10);
+              await initializeQuiz(10, {
+                useDynamicQuestions: true,
+                difficulty: "medium",
+              });
             } catch (error) {
               console.error("Failed to initialize quiz:", error);
             } finally {
