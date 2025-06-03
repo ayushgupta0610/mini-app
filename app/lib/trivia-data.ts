@@ -267,7 +267,9 @@ export const triviaQuestions: TriviaQuestion[] = [
  * @param count Number of questions to return
  * @returns Array of TriviaQuestion objects
  */
-export const getRandomStaticQuestions = (count: number = 8): TriviaQuestion[] => {
+export const getRandomStaticQuestions = (
+  count: number = 10
+): TriviaQuestion[] => {
   // Ensure we get questions from each category
   const categories = [
     "development",
@@ -309,14 +311,14 @@ export const getRandomStaticQuestions = (count: number = 8): TriviaQuestion[] =>
  * @returns Promise resolving to array of TriviaQuestion objects
  */
 export const getDynamicQuestionsFromAPI = async (
-  count: number = 8,
+  count: number = 10,
   difficulty: "easy" | "medium" | "hard" = "medium"
 ): Promise<TriviaQuestion[]> => {
   try {
-    const response = await fetch('/api/generate-questions', {
-      method: 'POST',
+    const response = await fetch("/api/generate-questions", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ count, difficulty }),
     });
@@ -341,7 +343,7 @@ export const getDynamicQuestionsFromAPI = async (
  * @returns Promise resolving to array of TriviaQuestion objects
  */
 export const getRandomQuestions = async (
-  count: number = 8,
+  count: number = 10,
   options?: {
     useDynamicQuestions?: boolean;
     difficulty?: "easy" | "medium" | "hard";
@@ -353,7 +355,10 @@ export const getRandomQuestions = async (
     try {
       return await getDynamicQuestionsFromAPI(count, difficulty);
     } catch (error) {
-      console.error("Failed to get dynamic questions, falling back to static questions:", error);
+      console.error(
+        "Failed to get dynamic questions, falling back to static questions:",
+        error
+      );
       return getRandomStaticQuestions(count);
     }
   }
