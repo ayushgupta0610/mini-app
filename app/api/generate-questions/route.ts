@@ -1,44 +1,115 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import {
-  fetchTriviaQuestionsBatchFromGemini,
-  GeminiTriviaQuestion,
-} from "@/app/lib/gemini-api";
+import { fetchTriviaQuestionsBatchFromGemini } from "@/app/lib/gemini-api";
+import { TriviaQuestion } from "@/app/lib/trivia-data";
+import { v4 as uuidv4 } from "uuid";
 
-// Get API keys from environment variables
+// Get API key from environment variables
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-// Initialize Supabase client
-const supabase =
-  SUPABASE_URL && SUPABASE_ANON_KEY
-    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : null;
-
-// Define the database schema type
-type TriviaQuestionRecord = {
-  id: string;
-  category: GeminiTriviaQuestion["category"];
-  question: string;
-  options: string[];
-  correct_answer: number;
-  year_indicator: number;
-  difficulty: string;
-  created_at: string;
-};
-
-// Minimum number of questions to maintain in the database per difficulty level
-const MIN_QUESTIONS_PER_DIFFICULTY = 20;
-
-// Maximum number of questions to fetch in a batch
-const MAX_BATCH_SIZE = 30;
 
 /**
- * Generates crypto trivia questions using a caching strategy
- * 1. First checks if there are enough questions in the database
- * 2. If not, fetches new questions from Gemini API
- * 3. In the background, fetches additional questions to maintain the cache
+ * Generate fallback questions when API fails
+ */
+function generateFallbackQuestions(
+  requestedCount: number,
+  difficulty: string
+): TriviaQuestion[] {
+  // Create some basic fallback questions
+  const fallbackQuestions: TriviaQuestion[] = [
+    {
+      id: `fallback-${uuidv4().slice(0, 8)}`,
+      category: "development",
+      question: "Which consensus mechanism does Ethereum use after 'The Merge'?",
+      options: ["Proof of Work", "Proof of Stake", "Proof of Authority", "Proof of Space"],
+      correctAnswer: 1,
+      yearIndicator: 2022,
+    },
+    {
+      id: `fallback-${uuidv4().slice(0, 8)}`,
+      category: "memes-nfts-tokens",
+      question: "What does 'WAGMI' stand for in crypto culture?",
+      options: [
+        "We Are Getting Money Instantly",
+        "We're All Gonna Make It",
+        "When Art Generates Massive Income",
+        "Wealth And Growth Metrics Index",
+      ],
+      correctAnswer: 1,
+      yearIndicator: 2021,
+    },
+    {
+      id: `fallback-${uuidv4().slice(0, 8)}`,
+      category: "scams-incidents",
+      question: "What is a 'rug pull' in crypto?",
+      options: [
+        "A hardware wallet malfunction",
+        "Developers abandoning a project after taking investors' money",
+        "A type of mining attack",
+        "A market manipulation technique",
+      ],
+      correctAnswer: 1,
+      yearIndicator: 2020,
+    },
+    {
+      id: `fallback-${uuidv4().slice(0, 8)}`,
+      category: "crypto-characters",
+      question: "Which exchange filed for bankruptcy in 2022 after misusing customer funds?",
+      options: ["Binance", "Coinbase", "FTX", "Kraken"],
+      correctAnswer: 2,
+      yearIndicator: 2022,
+    },
+    {
+      id: `fallback-${uuidv4().slice(0, 8)}`,
+      category: "development",
+      question: "What programming language is primarily used for Ethereum smart contracts?",
+      options: ["JavaScript", "Python", "Solidity", "Rust"],
+      correctAnswer: 2,
+      yearIndicator: 2017,
+    },
+    {
+      id: `fallback-${uuidv4().slice(0, 8)}`,
+      category: "memes-nfts-tokens",
+      question: "Which NFT collection features pixelated characters and became one of the first major NFT phenomena?",
+      options: ["Bored Ape Yacht Club", "CryptoPunks", "Azuki", "Doodles"],
+      correctAnswer: 1,
+      yearIndicator: 2017,
+    },
+    {
+      id: `fallback-${uuidv4().slice(0, 8)}`,
+      category: "scams-incidents",
+      question: "What was BitConnect primarily known for?",
+      options: [
+        "Being the first DEX",
+        "A legitimate lending platform",
+        "A Ponzi scheme",
+        "A hardware wallet",
+      ],
+      correctAnswer: 2,
+      yearIndicator: 2018,
+    },
+    {
+      id: `fallback-${uuidv4().slice(0, 8)}`,
+      category: "crypto-characters",
+      question: "Who is known as 'Satoshi Nakamoto'?",
+      options: [
+        "The founder of Ethereum",
+        "The pseudonymous creator of Bitcoin",
+        "The CEO of Binance",
+        "The inventor of the first hardware wallet",
+      ],
+      correctAnswer: 1,
+      yearIndicator: 2009,
+    },
+  ];
+
+  // Shuffle and return the requested number
+  return fallbackQuestions
+    .sort(() => 0.5 - Math.random())
+    .slice(0, Math.min(requestedCount, fallbackQuestions.length));
+}
+
+/**
+ * API route handler for generating trivia questions
+ * Either uses Gemini API or falls back to static questions
  */
 export async function POST(request: NextRequest) {
   try {
@@ -46,439 +117,38 @@ export async function POST(request: NextRequest) {
 
     // Validate API key
     if (!GEMINI_API_KEY) {
-      return NextResponse.json(
-        { error: "Gemini API key not configured on the server" },
-        { status: 500 }
-      );
+      console.warn("Gemini API key not configured, using fallback static questions");
+      // Generate some static questions as fallback
+      const fallbackQuestions = generateFallbackQuestions(count, difficulty);
+      return NextResponse.json({ questions: fallbackQuestions });
     }
 
-    // Validate Supabase connection
-    if (!supabase) {
-      return NextResponse.json(
-        { error: "Supabase not properly configured" },
-        { status: 500 }
-      );
-    }
-
+    // Try to generate questions using Gemini API
     try {
-      // First try to get questions from the database
-      const { data: dbQuestions, error: fetchError } = await supabase
-        .from("trivia_questions")
-        .select("*")
-        .eq("difficulty", difficulty)
-        .order("created_at", { ascending: false })
-        .limit(count);
-
-      if (fetchError) {
-        console.error("Error fetching questions from Supabase:", fetchError);
-        throw fetchError;
-      }
-
-      // If we have enough questions in the database, use them
-      if (dbQuestions && dbQuestions.length >= count) {
-        console.log(
-          `Using ${dbQuestions.length} cached questions from database`
-        );
-
-        // Convert database records to the expected format
-        const questions: GeminiTriviaQuestion[] = dbQuestions.map(
-          (q: TriviaQuestionRecord) => ({
-            id: q.id,
-            category: q.category,
-            question: q.question,
-            options: q.options,
-            correctAnswer: q.correct_answer,
-            yearIndicator: q.year_indicator,
-          })
-        );
-
-        // Shuffle the questions
-        const shuffledQuestions = questions.sort(() => 0.5 - Math.random());
-
-        // Check if we need to replenish the cache in the background
-        checkAndReplenishCache(difficulty).catch((err) => {
-          console.error("Background cache replenishment failed:", err);
-        });
-
-        return NextResponse.json(shuffledQuestions.slice(0, count));
-      }
-
-      // If not enough questions in database, fetch from Gemini API
-      console.log(
-        `Not enough cached questions (${
-          dbQuestions?.length || 0
-        }/${count}), fetching from Gemini API`
-      );
       const questions = await fetchTriviaQuestionsBatchFromGemini(
         GEMINI_API_KEY,
         count,
-        difficulty
+        difficulty as "easy" | "medium" | "hard"
       );
-
-      // Convert to database format and save to Supabase
-      const questionsToSave = questions.map((q) => ({
-        category: q.category,
-        question: q.question,
-        options: q.options,
-        correct_answer: q.correctAnswer,
-        year_indicator: q.yearIndicator,
-        difficulty: difficulty,
-      }));
-
-      const { error } = await supabase
-        .from("trivia_questions")
-        .insert(questionsToSave);
-
-      if (error) {
-        console.error("Error saving questions to Supabase:", error);
-        // Continue even if save fails, as we still want to return the questions
+      
+      // If we got questions, return them
+      if (questions && questions.length > 0) {
+        return NextResponse.json({ questions });
+      } else {
+        // If no questions were generated, use fallback
+        console.warn("No questions generated from API, using fallback");
+        const fallbackQuestions = generateFallbackQuestions(count, difficulty);
+        return NextResponse.json({ questions: fallbackQuestions });
       }
-
-      return NextResponse.json(questions);
-    } catch (error) {
-      console.error("Error generating questions:", error);
-      return NextResponse.json(
-        { error: "Failed to generate questions" },
-        { status: 500 }
-      );
+    } catch (apiError) {
+      console.error("Error fetching questions from Gemini API:", apiError);
+      // Use fallback questions if API call fails
+      const fallbackQuestions = generateFallbackQuestions(count, difficulty);
+      return NextResponse.json({ questions: fallbackQuestions });
     }
   } catch (error) {
-    console.error("Error generating questions:", error);
-    return NextResponse.json(
-      { error: "Failed to generate questions" },
-      { status: 500 }
-    );
+    console.error("Error processing request:", error);
+    const fallbackQuestions = generateFallbackQuestions(8, "medium");
+    return NextResponse.json({ questions: fallbackQuestions });
   }
 }
-
-/**
- * Checks if we need to replenish the cache and does so in the background
- * This ensures we always have enough questions for future requests
- */
-async function checkAndReplenishCache(
-  difficulty: "easy" | "medium" | "hard" = "medium"
-): Promise<void> {
-  if (!supabase || !GEMINI_API_KEY) return;
-
-  try {
-    // Check how many questions we have in the database for this difficulty
-    const { count, error } = await supabase
-      .from("trivia_questions")
-      .select("*", { count: "exact", head: true })
-      .eq("difficulty", difficulty);
-
-    if (error) {
-      console.error("Error checking question count:", error);
-      return;
-    }
-
-    // If we have enough questions, no need to replenish
-    if (count && count >= MIN_QUESTIONS_PER_DIFFICULTY) {
-      console.log(
-        `Cache has enough questions (${count}/${MIN_QUESTIONS_PER_DIFFICULTY}) for ${difficulty} difficulty`
-      );
-      return;
-    }
-
-    // Calculate how many more questions we need
-    const neededQuestions = MIN_QUESTIONS_PER_DIFFICULTY - (count || 0);
-    console.log(
-      `Replenishing cache with ${neededQuestions} new ${difficulty} questions in the background`
-    );
-
-    // Fetch new questions in batches to avoid rate limiting
-    const batchSize = Math.min(neededQuestions, MAX_BATCH_SIZE);
-    const newQuestions = await fetchTriviaQuestionsBatchFromGemini(
-      GEMINI_API_KEY,
-      batchSize,
-      difficulty
-    );
-
-    // Save the new questions to the database
-    if (newQuestions.length > 0) {
-      const questionsToSave = newQuestions.map((q) => ({
-        category: q.category,
-        question: q.question,
-        options: q.options,
-        correct_answer: q.correctAnswer,
-        year_indicator: q.yearIndicator,
-        difficulty: difficulty,
-      }));
-
-      const { error: insertError } = await supabase
-        .from("trivia_questions")
-        .insert(questionsToSave);
-
-      if (insertError) {
-        console.error("Error saving new questions to cache:", insertError);
-        return;
-      }
-
-      console.log(
-        `Successfully added ${newQuestions.length} new questions to the cache`
-      );
-    }
-  } catch (error) {
-    console.error("Error in background cache replenishment:", error);
-  }
-}
-//         year_indicator: q.yearIndicator,
-//         difficulty: difficulty,
-//       }));
-
-//       const { error: insertError } = await supabase
-//         .from("trivia_questions")
-//         .insert(questionsToSave);
-
-//       if (insertError) {
-//         console.error("Error saving new questions:", insertError);
-//       }
-//     }
-
-//     // Combine existing and new questions
-//     return [
-//       ...(dbQuestions || []),
-//       ...newQuestions.map((q) => ({
-//         ...q,
-//         correct_answer: q.correctAnswer,
-//         year_indicator: q.yearIndicator,
-//       })),
-//     ].slice(0, count) as TriviaQuestion[];
-//   } catch (error) {
-//     console.error("Error in fetchTriviaQuestionsFromDatabase:", error);
-//     // If there's an error with the database, fall back to generating questions
-//     if (!GEMINI_API_KEY) {
-//       throw new Error("Gemini API key not configured");
-//     }
-//     const questions = await fetchTriviaQuestionsFromGemini(
-//       GEMINI_API_KEY,
-//       count,
-//       difficulty
-//     );
-//     return questions.map((q) => ({
-//       ...q,
-//       correct_answer: q.correctAnswer,
-//       year_indicator: q.yearIndicator,
-//     })) as TriviaQuestion[];
-//   }
-// }
-
-// /**
-//  * Fetches crypto trivia questions from Gemini API based on difficulty
-//  * Each question will be from a specific year, with years decreasing as difficulty increases
-//  */
-// async function fetchTriviaQuestionsFromGemini(
-//   apiKey: string,
-//   count: number = 10,
-//   difficulty: "easy" | "medium" | "hard" = "medium"
-// ): Promise<TriviaQuestion[]> {
-//   if (!apiKey) {
-//     throw new Error("Gemini API key is required");
-//   }
-
-//   // Initialize the Gemini API client with the latest package
-//   const genAI = new GoogleGenerativeAI(apiKey);
-//   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-//   // Calculate the starting year based on difficulty
-//   const startYear = 2024;
-//   const yearDecrement =
-//     difficulty === "easy" ? 1 : difficulty === "medium" ? 2 : 3;
-
-//   // Prepare the questions array
-//   const questions: TriviaQuestion[] = [];
-
-//   // Define the categories we want questions for
-//   const categories: Array<TriviaQuestion["category"]> = [
-//     "development",
-//     "memes-nfts-tokens",
-//     "scams-incidents",
-//     "crypto-characters",
-//   ];
-
-//   // Calculate how many questions we need per category
-//   const questionsPerCategory = Math.floor(count / categories.length);
-//   const remainder = count % categories.length;
-
-//   for (let i = 0; i < categories.length; i++) {
-//     const category = categories[i];
-//     const categoryCount =
-//       i < remainder ? questionsPerCategory + 1 : questionsPerCategory;
-
-//     for (let j = 0; j < categoryCount; j++) {
-//       const year = startYear - j * yearDecrement;
-
-//       try {
-//         const prompt = `Generate a high-quality crypto trivia question about events, developments, or notable things that happened around the year ${year} related to the category "${category}".
-
-// Requirements:
-// 1. The question should be multiple choice with exactly 4 options
-// 2. Only one option should be correct
-// 3. The question should be clear and unambiguous
-// 4. The options should be distinct and not too similar
-// 5. The correct answer should be factual and verifiable
-// 6. The question should be challenging but fair for ${difficulty} difficulty level
-// 7. Include a brief explanation of why the correct answer is right
-
-// Format your response as a valid JSON object with the following structure:
-// {
-//   "question": "The question text",
-//   "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-//   "correctAnswer": 0, // Index of the correct answer (0-3)
-//   "explanation": "Brief explanation of why this is the correct answer"
-// }`;
-
-//         const result = await model.generateContent({
-//           contents: [{ role: "user", parts: [{ text: prompt }] }],
-//           generationConfig: {
-//             temperature: 0.7,
-//             topP: 0.8,
-//             topK: 40,
-//             maxOutputTokens: 1024,
-//           },
-//         });
-//         const response = result.response;
-//         const text = response.text();
-
-//         // Extract the JSON from the response
-//         const jsonMatch =
-//           text.match(/```json\n([\s\S]*?)\n```/) ||
-//           text.match(/```([\s\S]*?)```/) ||
-//           text.match(/{[\s\S]*?}/);
-
-//         if (jsonMatch) {
-//           const jsonText = jsonMatch[1] || jsonMatch[0];
-//           const parsedResponse = JSON.parse(
-//             jsonText.replace(/```/g, "").trim()
-//           );
-
-//           // Validate the response structure
-//           if (
-//             !parsedResponse.question ||
-//             !Array.isArray(parsedResponse.options) ||
-//             parsedResponse.options.length !== 4 ||
-//             typeof parsedResponse.correctAnswer !== "number" ||
-//             parsedResponse.correctAnswer < 0 ||
-//             parsedResponse.correctAnswer > 3
-//           ) {
-//             console.error(
-//               "Invalid question structure from Gemini:",
-//               parsedResponse
-//             );
-//             continue;
-//           }
-
-//           // Create a question object
-//           const question: TriviaQuestion = {
-//             id: `${category}-${year}-${j}`,
-//             category,
-//             question: parsedResponse.question,
-//             options: parsedResponse.options,
-//             correctAnswer: parsedResponse.correctAnswer,
-//             yearIndicator: year,
-//           };
-
-//           questions.push(question);
-//         } else {
-//           console.error("Failed to parse JSON from Gemini response:", text);
-//           continue;
-//         }
-//       } catch (error) {
-//         console.error(
-//           `Error generating question for ${category} in year ${year}:`,
-//           error
-//         );
-//         continue;
-//       }
-//     }
-//   }
-
-//   // If we couldn't generate enough questions, fill in with questions from random years
-//   if (questions.length < count) {
-//     const remainingCount = count - questions.length;
-//     for (let i = 0; i < remainingCount; i++) {
-//       const category = categories[i % categories.length];
-//       const year = Math.floor(Math.random() * (2024 - 2009)) + 2009;
-
-//       try {
-//         const prompt = `Generate a high-quality crypto trivia question about events, developments, or notable things that happened around the year ${year} related to the category "${category}".
-
-// Requirements:
-// 1. The question should be multiple choice with exactly 4 options
-// 2. Only one option should be correct
-// 3. The question should be clear and unambiguous
-// 4. The options should be distinct and not too similar
-// 5. The correct answer should be factual and verifiable
-// 6. The question should be challenging but fair for ${difficulty} difficulty level
-// 7. Include a brief explanation of why the correct answer is right
-
-// Format your response as a valid JSON object with the following structure:
-// {
-//   "question": "The question text",
-//   "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-//   "correctAnswer": 0, // Index of the correct answer (0-3)
-//   "explanation": "Brief explanation of why this is the correct answer"
-// }`;
-
-//         const result = await model.generateContent({
-//           contents: [{ role: "user", parts: [{ text: prompt }] }],
-//           generationConfig: {
-//             temperature: 0.7,
-//             topP: 0.8,
-//             topK: 40,
-//             maxOutputTokens: 1024,
-//           },
-//         });
-//         const response = result.response;
-//         const text = response.text();
-
-//         // Extract the JSON from the response
-//         const jsonMatch =
-//           text.match(/```json\n([\s\S]*?)\n```/) ||
-//           text.match(/```([\s\S]*?)```/) ||
-//           text.match(/{[\s\S]*?}/);
-
-//         if (jsonMatch) {
-//           const jsonText = jsonMatch[1] || jsonMatch[0];
-//           const parsedResponse = JSON.parse(
-//             jsonText.replace(/```/g, "").trim()
-//           );
-
-//           // Validate the response structure
-//           if (
-//             !parsedResponse.question ||
-//             !Array.isArray(parsedResponse.options) ||
-//             parsedResponse.options.length !== 4 ||
-//             typeof parsedResponse.correctAnswer !== "number" ||
-//             parsedResponse.correctAnswer < 0 ||
-//             parsedResponse.correctAnswer > 3
-//           ) {
-//             console.error(
-//               "Invalid question structure from Gemini:",
-//               parsedResponse
-//             );
-//             continue;
-//           }
-
-//           // Create a question object
-//           const question: TriviaQuestion = {
-//             id: `${category}-${year}-backup-${i}`,
-//             category,
-//             question: parsedResponse.question,
-//             options: parsedResponse.options,
-//             correctAnswer: parsedResponse.correctAnswer,
-//             yearIndicator: year,
-//           };
-
-//           questions.push(question);
-//         }
-//       } catch (error) {
-//         console.error(`Error generating backup question:`, error);
-//         continue;
-//       }
-//     }
-//   }
-
-//   // Shuffle the questions to mix categories
-//   return questions.sort(() => 0.5 - Math.random());
-// }

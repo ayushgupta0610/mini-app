@@ -47,7 +47,7 @@ export async function fetchTriviaQuestionsBatchFromGemini(
 
   // Calculate the starting year based on difficulty
   // For harder difficulties, we'll start with more recent years
-  const startYear = 2024;
+  const startYear = 2025;
   const yearDecrement =
     difficulty === "easy" ? 1 : difficulty === "medium" ? 2 : 3;
 
@@ -99,7 +99,7 @@ Format your response as a valid JSON array with the following structure:
 [
   {
     "category": "${batchPrompts[0]?.category || "development"}",
-    "year": ${batchPrompts[0]?.year || 2024},
+    "year": ${batchPrompts[0]?.year || 2025},
     "question": "The question text",
     "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
     "correctAnswer": 0 // Index of the correct answer (0-3)
@@ -199,7 +199,7 @@ Make sure each question is specifically about something that happened in the spe
 
     for (let i = 0; i < remainingCount; i++) {
       const category = TRIVIA_CATEGORIES[i % TRIVIA_CATEGORIES.length];
-      const year = Math.floor(Math.random() * (2024 - 2009)) + 2009;
+      const year = Math.floor(Math.random() * (2025 - 2009)) + 2009;
       backupBatchPrompts.push({ category, year });
     }
 
@@ -225,7 +225,7 @@ Format your response as a valid JSON array with the following structure:
 [
   {
     "category": "${backupBatchPrompts[0]?.category || "development"}",
-    "year": ${backupBatchPrompts[0]?.year || 2024},
+    "year": ${backupBatchPrompts[0]?.year || 2025},
     "question": "The question text",
     "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
     "correctAnswer": 0 // Index of the correct answer (0-3)

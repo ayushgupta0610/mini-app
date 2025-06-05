@@ -11,6 +11,7 @@ export type TriviaQuestion = {
   yearIndicator: number; // Approximate year this knowledge became relevant
 };
 
+// Main array of trivia questions used throughout the app
 export const triviaQuestions: TriviaQuestion[] = [
   // Development Category
   {
@@ -284,7 +285,7 @@ export const getRandomStaticQuestions = (
 
   categories.forEach((category, index) => {
     const categoryQuestions = triviaQuestions.filter(
-      (q) => q.category === category
+      (q: TriviaQuestion) => q.category === category
     );
     const categoryCount =
       index < remainder ? questionsPerCategory + 1 : questionsPerCategory;
