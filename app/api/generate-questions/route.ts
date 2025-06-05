@@ -4,22 +4,25 @@ import { TriviaQuestion } from "@/app/lib/trivia-data";
 import { v4 as uuidv4 } from "uuid";
 
 // Get API key from environment variables
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY as string | undefined;
 
 /**
  * Generate fallback questions when API fails
  */
-function generateFallbackQuestions(
-  requestedCount: number,
-  difficulty: string
-): TriviaQuestion[] {
+function generateFallbackQuestions(requestedCount: number): TriviaQuestion[] {
   // Create some basic fallback questions
   const fallbackQuestions: TriviaQuestion[] = [
     {
       id: `fallback-${uuidv4().slice(0, 8)}`,
       category: "development",
-      question: "Which consensus mechanism does Ethereum use after 'The Merge'?",
-      options: ["Proof of Work", "Proof of Stake", "Proof of Authority", "Proof of Space"],
+      question:
+        "Which consensus mechanism does Ethereum use after 'The Merge'?",
+      options: [
+        "Proof of Work",
+        "Proof of Stake",
+        "Proof of Authority",
+        "Proof of Space",
+      ],
       correctAnswer: 1,
       yearIndicator: 2022,
     },
@@ -52,7 +55,8 @@ function generateFallbackQuestions(
     {
       id: `fallback-${uuidv4().slice(0, 8)}`,
       category: "crypto-characters",
-      question: "Which exchange filed for bankruptcy in 2022 after misusing customer funds?",
+      question:
+        "Which exchange filed for bankruptcy in 2022 after misusing customer funds?",
       options: ["Binance", "Coinbase", "FTX", "Kraken"],
       correctAnswer: 2,
       yearIndicator: 2022,
@@ -60,7 +64,8 @@ function generateFallbackQuestions(
     {
       id: `fallback-${uuidv4().slice(0, 8)}`,
       category: "development",
-      question: "What programming language is primarily used for Ethereum smart contracts?",
+      question:
+        "What programming language is primarily used for Ethereum smart contracts?",
       options: ["JavaScript", "Python", "Solidity", "Rust"],
       correctAnswer: 2,
       yearIndicator: 2017,
@@ -68,7 +73,8 @@ function generateFallbackQuestions(
     {
       id: `fallback-${uuidv4().slice(0, 8)}`,
       category: "memes-nfts-tokens",
-      question: "Which NFT collection features pixelated characters and became one of the first major NFT phenomena?",
+      question:
+        "Which NFT collection features pixelated characters and became one of the first major NFT phenomena?",
       options: ["Bored Ape Yacht Club", "CryptoPunks", "Azuki", "Doodles"],
       correctAnswer: 1,
       yearIndicator: 2017,
@@ -117,9 +123,11 @@ export async function POST(request: NextRequest) {
 
     // Validate API key
     if (!GEMINI_API_KEY) {
-      console.warn("Gemini API key not configured, using fallback static questions");
+      console.warn(
+        "Gemini API key not configured, using fallback static questions"
+      );
       // Generate some static questions as fallback
-      const fallbackQuestions = generateFallbackQuestions(count, difficulty);
+      const fallbackQuestions = generateFallbackQuestions(count);
       return NextResponse.json({ questions: fallbackQuestions });
     }
 
@@ -130,25 +138,25 @@ export async function POST(request: NextRequest) {
         count,
         difficulty as "easy" | "medium" | "hard"
       );
-      
+
       // If we got questions, return them
       if (questions && questions.length > 0) {
         return NextResponse.json({ questions });
       } else {
         // If no questions were generated, use fallback
         console.warn("No questions generated from API, using fallback");
-        const fallbackQuestions = generateFallbackQuestions(count, difficulty);
+        const fallbackQuestions = generateFallbackQuestions(count);
         return NextResponse.json({ questions: fallbackQuestions });
       }
     } catch (apiError) {
       console.error("Error fetching questions from Gemini API:", apiError);
       // Use fallback questions if API call fails
-      const fallbackQuestions = generateFallbackQuestions(count, difficulty);
+      const fallbackQuestions = generateFallbackQuestions(count);
       return NextResponse.json({ questions: fallbackQuestions });
     }
   } catch (error) {
     console.error("Error processing request:", error);
-    const fallbackQuestions = generateFallbackQuestions(8, "medium");
+    const fallbackQuestions = generateFallbackQuestions(10);
     return NextResponse.json({ questions: fallbackQuestions });
   }
 }
