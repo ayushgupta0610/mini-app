@@ -20,7 +20,7 @@ export const TriviaApp = () => {
   // Add state to control whether to show welcome screen
   const [showWelcome, setShowWelcome] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  // const router = useRouter();
+  const [sdkInitialized, setSdkInitialized] = useState(false);
   const pathname = usePathname();
 
   // Enable dynamic questions by default
@@ -29,15 +29,16 @@ export const TriviaApp = () => {
     setDifficulty("medium");
   }, [setUseDynamicQuestions, setDifficulty]);
 
-  // Only initialize the SDK when app is ready
+  // Initialize the SDK when app is ready
   useEffect(() => {
     // Only notify ready when we have questions (after welcome screen is dismissed)
-    if (questions.length > 0 && !showWelcome) {
+    if (questions.length > 0 && !showWelcome && !sdkInitialized) {
       const notifyReady = async () => {
         try {
           // Use the latest Mini App SDK ready method with disableNativeGestures option
           await sdk.actions.ready({ disableNativeGestures: false });
           console.log("Farcaster Mini App SDK ready signal sent");
+          setSdkInitialized(true);
         } catch (error) {
           console.error("Error sending ready signal to Farcaster:", error);
         }
@@ -45,7 +46,7 @@ export const TriviaApp = () => {
 
       notifyReady();
     }
-  }, [questions.length, isComplete, showWelcome]);
+  }, [questions.length, showWelcome, sdkInitialized]);
 
   // Handle URL cleanup if we somehow ended up with /quiz in the URL
   useEffect(() => {
@@ -60,36 +61,26 @@ export const TriviaApp = () => {
     }
   }, [pathname]);
 
-  // Call ready() once if questions are already populated on initial mount
-  // and welcome screen should be skipped
+  // Check if we have existing questions on initial mount
   useEffect(() => {
-    // If we have questions from a previous session, skip welcome screen
+    // If we have questions from a previous session and quiz is not complete, skip welcome screen
     if (questions.length > 0 && isComplete === false) {
+      console.log("Found existing questions, skipping welcome screen");
       setShowWelcome(false);
-
-      const notifyReady = async () => {
-        try {
-          // Use the latest Mini App SDK ready method with disableNativeGestures option
-          await sdk.actions.ready({ disableNativeGestures: false });
-          console.log("Farcaster Mini App SDK ready signal sent (initial mount)");
-        } catch (error) {
-          console.error("Error sending ready signal to Farcaster:", error);
-        }
-      };
-
-      notifyReady();
     }
-  }, []); // Run only once on mount (Resolve the dependency issue)
+  }, []); // Run only once on mount
 
   // Show welcome screen if showWelcome is true
   if (showWelcome) {
     return (
       <WelcomeScreen
         onStart={() => {
-          // Just update UI state without re-initializing the quiz
-          // The quiz is already initialized in the WelcomeScreen component
+          console.log("Welcome screen onStart callback triggered");
+          // Update UI state to show questions
           setShowWelcome(false);
           setIsLoading(false);
+          // Reset SDK initialization flag
+          setSdkInitialized(false);
         }}
         isLoading={isLoading}
       />
