@@ -83,24 +83,11 @@ export const TriviaApp = () => {
   if (showWelcome) {
     return (
       <WelcomeScreen
-        onStart={async () => {
-          setIsLoading(true);
+        onStart={() => {
+          // Just update UI state without re-initializing the quiz
+          // The quiz is already initialized in the WelcomeScreen component
           setShowWelcome(false);
-          // Initialize quiz when user clicks start
-          if (questions.length === 0) {
-            try {
-              await initializeQuiz(10, {
-                useDynamicQuestions: true,
-                difficulty: "medium",
-              });
-            } catch (error) {
-              console.error("Failed to initialize quiz:", error);
-            } finally {
-              setIsLoading(false);
-            }
-          } else {
-            setIsLoading(false);
-          }
+          setIsLoading(false);
         }}
         isLoading={isLoading}
       />
