@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// Import the SDK from frame-sdk
+// Import the SDK from the latest Mini App SDK
 import { sdk } from "@farcaster/frame-sdk";
 import { useTriviaStore } from "@/app/lib/store";
 import { WelcomeScreen } from "./welcome-screen";
@@ -35,8 +35,9 @@ export const TriviaApp = () => {
     if (questions.length > 0 && !showWelcome) {
       const notifyReady = async () => {
         try {
-          await sdk.actions.ready();
-          console.log("Farcaster SDK ready signal sent");
+          // Use the latest Mini App SDK ready method with disableNativeGestures option
+          await sdk.actions.ready({ disableNativeGestures: false });
+          console.log("Farcaster Mini App SDK ready signal sent");
         } catch (error) {
           console.error("Error sending ready signal to Farcaster:", error);
         }
@@ -68,8 +69,9 @@ export const TriviaApp = () => {
 
       const notifyReady = async () => {
         try {
-          await sdk.actions.ready();
-          console.log("Farcaster SDK ready signal sent (initial mount)");
+          // Use the latest Mini App SDK ready method with disableNativeGestures option
+          await sdk.actions.ready({ disableNativeGestures: false });
+          console.log("Farcaster Mini App SDK ready signal sent (initial mount)");
         } catch (error) {
           console.error("Error sending ready signal to Farcaster:", error);
         }

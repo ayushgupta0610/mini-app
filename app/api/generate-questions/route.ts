@@ -146,6 +146,8 @@ export async function POST(request: NextRequest) {
           if (SUPABASE_URL && SUPABASE_ANON_KEY) {
             try {
               const supabase = createSupabaseClient();
+              
+              // Save metrics
               await supabase.from('llm_metrics').insert({
                 operation: 'generate_questions',
                 time_ms: result.generationTimeMs,
@@ -154,9 +156,31 @@ export async function POST(request: NextRequest) {
                 success: true
               });
               console.log(`Saved LLM metrics to Supabase: ${result.generationTimeMs}ms for ${result.questions.length} questions`);
+              
+              // Save the generated questions to the trivia_questions table
+              const questionsToSave = result.questions.map(q => ({
+                id: q.id,
+                category: q.category,
+                question: q.question,
+                options: q.options,
+                correct_answer: q.correctAnswer,
+                year_indicator: q.yearIndicator,
+                difficulty: typedDifficulty,
+                created_at: new Date().toISOString()
+              }));
+              
+              const { data, error } = await supabase
+                .from('trivia_questions')
+                .insert(questionsToSave);
+                
+              if (error) {
+                console.error("Error saving questions to Supabase:", error);
+              } else {
+                console.log(`Successfully saved ${questionsToSave.length} questions to Supabase trivia_questions table`);
+              }
             } catch (metricsError) {
-              console.error("Error saving LLM metrics to Supabase:", metricsError);
-              // Continue even if metrics saving fails
+              console.error("Error saving data to Supabase:", metricsError);
+              // Continue even if saving fails
             }
           }
           
