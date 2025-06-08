@@ -14,7 +14,15 @@ import {
 } from "@/app/components/ui/card";
 import { FarcasterAuth } from "@/app/components/auth/farcaster-auth";
 import { TriviaSettings } from "./trivia-settings";
-import { AlertCircle, Play, Loader2, Settings, Trophy, Brain, Zap } from "lucide-react";
+import {
+  AlertCircle,
+  Play,
+  Loader2,
+  Settings,
+  Trophy,
+  Brain,
+  Zap,
+} from "lucide-react";
 
 interface WelcomeScreenProps {
   onStart?: () => void;
@@ -45,48 +53,50 @@ export const WelcomeScreen = ({
 
   const handleStart = async () => {
     setIsStarting(true);
-    
+
     try {
       // First, try to initialize with static questions to ensure we have something
       // This is a fallback in case the dynamic questions API fails
       console.log("Starting quiz initialization...");
-      
+
       // Initialize the quiz with 8 questions
       // Use static questions first if dynamic questions are enabled (we'll try dynamic in the background)
       const useStatic = useDynamicQuestions;
-      
+
       await initializeQuiz(8, {
         useDynamicQuestions: false, // Start with static questions for speed
         difficulty,
       });
-      
+
       // Call the onStart callback to update parent component state immediately
       // This ensures we move past the welcome screen even if there are API issues
       if (onStart) {
         console.log("Calling onStart callback to proceed to questions");
         onStart();
       }
-      
+
       // If dynamic questions were requested, try to load them in the background
       if (useStatic) {
-        console.log("Attempting to load dynamic questions in the background...");
+        console.log(
+          "Attempting to load dynamic questions in the background..."
+        );
         initializeQuiz(8, {
           useDynamicQuestions: true,
           difficulty,
-        }).catch(err => {
+        }).catch((err) => {
           console.error("Background dynamic questions loading failed:", err);
           // We already have static questions, so this is non-blocking
         });
       }
-      
+
       console.log("Quiz initialized successfully with static questions");
     } catch (error) {
       console.error("Error starting quiz with static questions:", error);
-      
+
       // Last resort fallback - try with minimal configuration
       try {
         await initializeQuiz(5); // Minimal number of questions, default settings
-        
+
         if (onStart) {
           console.log("Using emergency fallback questions");
           onStart();
@@ -98,9 +108,9 @@ export const WelcomeScreen = ({
         return;
       }
     }
-    
+
     // Set loading to false only on success path
-    setIsStarting(false)
+    setIsStarting(false);
   };
 
   const categories = [
@@ -115,7 +125,7 @@ export const WelcomeScreen = ({
     <Card className="w-full max-w-md mx-auto relative overflow-hidden border-2 border-primary/20 shadow-lg">
       {/* Background gradient effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 z-0"></div>
-      
+
       {/* Animated particles */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         {[...Array(20)].map((_, i) => (
@@ -148,7 +158,7 @@ export const WelcomeScreen = ({
           transition={{ duration: 0.5 }}
           className="flex flex-col items-center"
         >
-          <motion.div 
+          <motion.div
             className="w-24 h-24 mb-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -172,7 +182,7 @@ export const WelcomeScreen = ({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <motion.p 
+          <motion.p
             className="text-center mb-4 font-medium"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -197,7 +207,7 @@ export const WelcomeScreen = ({
             ))}
           </div>
 
-          <motion.div 
+          <motion.div
             className="flex items-center justify-center gap-2 mt-6 mb-3 bg-primary/10 rounded-full py-2 px-4"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -205,7 +215,7 @@ export const WelcomeScreen = ({
           >
             <Zap className="h-4 w-4 text-primary" />
             <p className="text-center text-sm font-medium">
-              10 questions • 5 seconds per question • 10 plays per day
+              10 questions • 5 seconds per question • 3 plays per day
             </p>
             <Trophy className="h-4 w-4 text-primary" />
           </motion.div>
@@ -256,7 +266,7 @@ export const WelcomeScreen = ({
       </CardContent>
 
       <CardFooter className="relative z-10">
-        <motion.div 
+        <motion.div
           className="w-full"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

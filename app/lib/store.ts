@@ -45,10 +45,13 @@ interface TriviaState extends PersistedState {
   difficulty: "easy" | "medium" | "hard";
 
   // Actions
-  initializeQuiz: (questionCount?: number, options?: {
-    useDynamicQuestions?: boolean;
-    difficulty?: "easy" | "medium" | "hard";
-  }) => Promise<void>;
+  initializeQuiz: (
+    questionCount?: number,
+    options?: {
+      useDynamicQuestions?: boolean;
+      difficulty?: "easy" | "medium" | "hard";
+    }
+  ) => Promise<void>;
   answerQuestion: (answerIndex: number) => void;
   nextQuestion: () => void;
   resetQuiz: () => Promise<void>;
@@ -130,7 +133,8 @@ export const useTriviaStore = create<TriviaState>()(
               : { date: today, count: 1 };
 
           // Determine if we should use dynamic questions
-          const useDynamic = options?.useDynamicQuestions ?? useDynamicQuestions;
+          const useDynamic =
+            options?.useDynamicQuestions ?? useDynamicQuestions;
           const selectedDifficulty = options?.difficulty ?? difficulty;
 
           // Get questions - either dynamic from API or static
@@ -154,7 +158,7 @@ export const useTriviaStore = create<TriviaState>()(
           });
         } catch (error) {
           console.error("Error initializing quiz:", error);
-          
+
           // Fallback to static questions in case of error
           const { user } = get();
           const today = getTodayString();
@@ -164,7 +168,7 @@ export const useTriviaStore = create<TriviaState>()(
               : { date: today, count: 1 };
 
           const questions = getRandomStaticQuestions(questionCount);
-          
+
           set({
             questions,
             currentQuestionIndex: 0,
@@ -190,8 +194,8 @@ export const useTriviaStore = create<TriviaState>()(
           return false;
         }
 
-        // Check if user has reached the limit of 10 plays per day
-        return user.dailyPlays.count >= 10;
+        // Check if user has reached the limit of 3 plays per day
+        return user.dailyPlays.count >= 3;
       },
 
       setUserData: (userData: Partial<UserData>) => {
