@@ -329,10 +329,29 @@ export const getDynamicQuestionsFromAPI = async (
     }
 
     const data = await response.json();
+    
+    // Log the source of questions and any metrics
+    if (data.source) {
+      console.log(`%c Questions source: ${data.source}`, 'background: #222; color: #bada55; padding: 2px 5px; border-radius: 2px;');
+      
+      // Log additional metrics based on source
+      if (data.source === 'llm' && data.metrics?.generationTimeMs) {
+        console.log(`%c LLM generation time: ${data.metrics.generationTimeMs}ms`, 'background: #222; color: #ff9; padding: 2px 5px; border-radius: 2px;');
+      } else if (data.source === 'supabase') {
+        console.log('%c Questions loaded from database', 'background: #222; color: #9af; padding: 2px 5px; border-radius: 2px;');
+      } else if (data.source === 'hardcoded') {
+        console.log('%c Using fallback hardcoded questions', 'background: #222; color: #f99; padding: 2px 5px; border-radius: 2px;');
+        if (data.metrics?.error) {
+          console.log('%c Error occurred during question generation', 'background: #922; color: #fff; padding: 2px 5px; border-radius: 2px;');
+        }
+      }
+    }
+    
     return data.questions;
   } catch (error) {
     console.error("Error fetching questions from API:", error);
     // Fallback to static questions if API fails
+    console.log('%c Failed to fetch questions - using static fallback', 'background: #922; color: #fff; padding: 2px 5px; border-radius: 2px;');
     return getRandomStaticQuestions(count);
   }
 };

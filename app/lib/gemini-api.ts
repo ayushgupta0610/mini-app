@@ -31,16 +31,19 @@ export const TRIVIA_CATEGORIES: Array<GeminiTriviaQuestion["category"]> = [
  * @param apiKey - The Gemini API key
  * @param count - The total number of questions to generate
  * @param difficulty - The difficulty level of the questions
- * @returns A promise that resolves to an array of trivia questions
+ * @returns A promise that resolves to an object containing the questions and generation time
  */
 export async function fetchTriviaQuestionsBatchFromGemini(
   apiKey: string,
   count: number = 10,
   difficulty: "easy" | "medium" | "hard" = "medium"
-): Promise<GeminiTriviaQuestion[]> {
+): Promise<{ questions: GeminiTriviaQuestion[], generationTimeMs: number }> {
   if (!apiKey) {
     throw new Error("Gemini API key is required");
   }
+  
+  // Start timing the LLM generation process
+  const startTime = performance.now();
 
   // Initialize the Gemini API client with the API key
   const ai = new GoogleGenAI({ apiKey });
@@ -320,8 +323,15 @@ Format your response as a valid JSON array with the following structure:
     }
   }
 
-  // Shuffle the questions to mix categories
-  return questions.sort(() => 0.5 - Math.random()).slice(0, count);
+  // Calculate the time taken for generation
+  const endTime = performance.now();
+  const generationTimeMs = Math.round(endTime - startTime);
+  
+  // Shuffle the final selection to mix categories
+  return {
+    questions: questions.sort(() => 0.5 - Math.random()).slice(0, count),
+    generationTimeMs
+  };
 }
 
 /**
@@ -337,5 +347,6 @@ export async function fetchTriviaQuestionsFromGemini(
   count: number = 10,
   difficulty: "easy" | "medium" | "hard" = "medium"
 ): Promise<GeminiTriviaQuestion[]> {
-  return fetchTriviaQuestionsBatchFromGemini(apiKey, count, difficulty);
+  const result = await fetchTriviaQuestionsBatchFromGemini(apiKey, count, difficulty);
+  return result.questions;
 }

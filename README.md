@@ -54,11 +54,16 @@ A fun and interactive Farcaster mini app that tests users' crypto knowledge acro
 
 This app can be deployed to any platform that supports Next.js, such as Vercel or Netlify.
 
-Make sure to set the following environment variables in your deployment platform:
+#### 1. Deploy to Vercel (Recommended)
+
+1. Push your code to a GitHub repository
+2. Sign up for a [Vercel account](https://vercel.com)
+3. Create a new project by importing your GitHub repository
+4. Set the following environment variables in your Vercel project settings:
 
 ```
 # Farcaster Frame integration
-NEXT_PUBLIC_BASE_URL=https://mini-app-theta-roan.vercel.app
+NEXT_PUBLIC_BASE_URL=https://your-deployed-app-url.vercel.app
 
 # Google Gemini API
 GEMINI_API_KEY=your-gemini-api-key
@@ -68,7 +73,52 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-Also update the Frame metadata in `app/layout.tsx` with your deployment URL.
+5. Deploy your application
+
+#### 2. Create Supabase Table for LLM Metrics
+
+Create a new table in your Supabase project to store LLM generation metrics:
+
+```sql
+CREATE TABLE llm_metrics (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  operation TEXT NOT NULL,
+  time_ms INTEGER NOT NULL,
+  question_count INTEGER,
+  difficulty TEXT,
+  success BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+#### 3. Test Your Frame
+
+After deployment, you can test your Frame using the [Farcaster Frame validator](https://warpcast.com/~/developers/frames):
+
+1. Enter your deployed URL
+2. Verify that the Frame loads correctly
+3. Test the interactions to ensure everything works as expected
+
+#### 4. Submit to Farcaster Mini App Store
+
+To make your mini app available in the Farcaster app store:
+
+1. Log in to your Warpcast account
+2. Go to the [Developer Hub](https://warpcast.com/~/developers)
+3. Click on "Submit a Frame"
+4. Fill out the required information:
+   - App Name: "Crypto Trivia"
+   - Description: "Test your crypto knowledge and discover when you should have entered the space!"
+   - URL: Your deployed app URL
+   - Category: Games
+   - Tags: Crypto, Trivia, Quiz
+5. Submit your app for review
+
+Once approved, your mini app will be available in the Farcaster app store for all users to discover and use.
+
+#### 5. Share Your Mini App
+
+You can also share your mini app directly by creating a cast with your app's URL on Farcaster. The Frame metadata will automatically render as an interactive Frame in users' feeds.
 
 ## Project Structure
 

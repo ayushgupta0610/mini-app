@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchTriviaQuestionsBatchFromGemini } from "@/app/lib/gemini-api";
 import { TriviaQuestion } from "@/app/lib/trivia-data";
-import { fetchTriviaQuestionsFromSupabase } from "@/app/lib/supabase-client";
+import { fetchTriviaQuestionsFromSupabase, createSupabaseClient } from "@/app/lib/supabase-client";
 import { v4 as uuidv4 } from "uuid";
 
 // Get API keys and configuration from environment variables
@@ -132,16 +132,41 @@ export async function POST(request: NextRequest) {
     if (GEMINI_API_KEY) {
       try {
         console.log("Attempting to generate questions using LLM (Gemini API)");
-        const questions = await fetchTriviaQuestionsBatchFromGemini(
+        const result = await fetchTriviaQuestionsBatchFromGemini(
           GEMINI_API_KEY,
           count,
           typedDifficulty
         );
 
-        // If we got questions from LLM, return them
-        if (questions && questions.length > 0) {
-          console.log(`Successfully generated ${questions.length} questions from LLM`);
-          return NextResponse.json({ questions, source: "llm" });
+        // If we got questions from LLM, save generation time to Supabase and return them
+        if (result.questions && result.questions.length > 0) {
+          console.log(`Successfully generated ${result.questions.length} questions from LLM in ${result.generationTimeMs}ms`);
+          
+          // Save the generation time to Supabase if available
+          if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+            try {
+              const supabase = createSupabaseClient();
+              await supabase.from('llm_metrics').insert({
+                operation: 'generate_questions',
+                time_ms: result.generationTimeMs,
+                question_count: result.questions.length,
+                difficulty: typedDifficulty,
+                success: true
+              });
+              console.log(`Saved LLM metrics to Supabase: ${result.generationTimeMs}ms for ${result.questions.length} questions`);
+            } catch (metricsError) {
+              console.error("Error saving LLM metrics to Supabase:", metricsError);
+              // Continue even if metrics saving fails
+            }
+          }
+          
+          return NextResponse.json({ 
+            questions: result.questions, 
+            source: "llm",
+            metrics: {
+              generationTimeMs: result.generationTimeMs
+            }
+          });
         } else {
           console.warn("LLM returned empty questions array, trying Supabase fallback");
         }
@@ -161,7 +186,13 @@ export async function POST(request: NextRequest) {
         
         if (questions && questions.length > 0) {
           console.log(`Successfully fetched ${questions.length} questions from Supabase`);
-          return NextResponse.json({ questions, source: "supabase" });
+          return NextResponse.json({ 
+            questions, 
+            source: "supabase",
+            metrics: {
+              fromDatabase: true
+            }
+          });
         } else {
           console.warn("Supabase returned empty questions array, using hardcoded fallback");
         }
@@ -176,10 +207,23 @@ export async function POST(request: NextRequest) {
     // Final fallback: Use hardcoded questions
     console.warn("Using hardcoded fallback questions as last resort");
     const fallbackQuestions = generateFallbackQuestions(count);
-    return NextResponse.json({ questions: fallbackQuestions, source: "hardcoded" });
+    return NextResponse.json({ 
+      questions: fallbackQuestions, 
+      source: "hardcoded",
+      metrics: {
+        fallback: true
+      }
+    });
   } catch (error) {
     console.error("Error processing request:", error);
     const fallbackQuestions = generateFallbackQuestions(10);
-    return NextResponse.json({ questions: fallbackQuestions, source: "hardcoded" });
+    return NextResponse.json({ 
+      questions: fallbackQuestions, 
+      source: "hardcoded",
+      metrics: {
+        fallback: true,
+        error: true
+      }
+    });
   }
 }
