@@ -14,12 +14,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Crypto Trivia | Farcaster Mini App",
-  description:
-    "Test your crypto knowledge and discover when you should have entered the space!",
+  description: "Do you believe you were early to Web3? Let’s find out.",
   openGraph: {
     title: "Crypto Trivia",
-    description:
-      "Test your crypto knowledge and discover when you should have entered the space!",
+    description: "Do you believe you were early to Web3? Let’s find out.",
     images: [`${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`],
     type: "website",
     url: process.env.NEXT_PUBLIC_BASE_URL,
@@ -45,7 +43,7 @@ export default function RootLayout({
         />
         <meta
           name="og:description"
-          content="Test your crypto knowledge and discover when you should have entered the space!"
+          content="Do you believe you were early to Web3? Let’s find out."
         />
         <meta
           name="fc:frame"

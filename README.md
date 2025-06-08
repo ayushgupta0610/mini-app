@@ -35,12 +35,14 @@ A fun and interactive Farcaster mini app that tests users' crypto knowledge acro
    npm install
    ```
 3. Set up environment variables:
+
    - Copy `env.example` to `.env.local`
    - Add your Google Gemini API key as `GEMINI_API_KEY`
    - Add your Supabase URL as `NEXT_PUBLIC_SUPABASE_URL`
    - Add your Supabase anon key as `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 4. Set up the Supabase database:
+
    - Create a new project in [Supabase](https://supabase.com)
    - Run the SQL migration in `supabase/migrations/20250602_create_trivia_questions.sql`
 
@@ -108,7 +110,7 @@ To make your mini app available in the Farcaster app store:
 3. Click on "Submit a Frame"
 4. Fill out the required information:
    - App Name: "Crypto Trivia"
-   - Description: "Test your crypto knowledge and discover when you should have entered the space!"
+   - Description: "Do you believe you were early to Web3? Let’s find out."
    - URL: Your deployed app URL
    - Category: Games
    - Tags: Crypto, Trivia, Quiz

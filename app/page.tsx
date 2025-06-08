@@ -4,8 +4,7 @@ import { TriviaApp } from "./components/trivia/trivia-app";
 
 export const metadata: Metadata = {
   title: "Crypto Trivia | Farcaster Mini App",
-  description:
-    "Test your crypto knowledge and discover when you should have entered the space!",
+  description: "Do you believe you were early to Web3? Let’s find out.",
 };
 
 export default function Home() {

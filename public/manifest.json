@@ -1,7 +1,7 @@
 {
   "name": "Crypto Trivia",
   "short_name": "Crypto Trivia",
-  "description": "Test your crypto knowledge and discover when you should have entered the space!",
+  "description": "Do you believe you were early to Web3? Let’s find out.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",

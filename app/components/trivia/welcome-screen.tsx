@@ -170,8 +170,7 @@ export const WelcomeScreen = ({
             Crypto Trivia
           </CardTitle>
           <CardDescription className="text-center mt-2 text-base">
-            Test your crypto knowledge and discover when you should have entered
-            the space!
+            Do you believe you were early to Web3? Let’s find out.
           </CardDescription>
         </motion.div>
       </CardHeader>
