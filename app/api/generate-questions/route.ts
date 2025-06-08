@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchTriviaQuestionsBatchFromGemini } from "@/app/lib/gemini-api";
 import { TriviaQuestion } from "@/app/lib/trivia-data";
+import { fetchTriviaQuestionsFromSupabase } from "@/app/lib/supabase-client";
 import { v4 as uuidv4 } from "uuid";
 
-// Get API key from environment variables
+// Get API keys and configuration from environment variables
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY as string | undefined;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 /**
  * Generate fallback questions when API fails
@@ -115,48 +118,68 @@ function generateFallbackQuestions(requestedCount: number): TriviaQuestion[] {
 
 /**
  * API route handler for generating trivia questions
- * Either uses Gemini API or falls back to static questions
+ * Priority order:
+ * 1. LLM (Gemini API)
+ * 2. Supabase database
+ * 3. Hardcoded fallback questions
  */
 export async function POST(request: NextRequest) {
   try {
     const { count = 8, difficulty = "medium" } = await request.json();
+    const typedDifficulty = difficulty as "easy" | "medium" | "hard";
+    
+    // First priority: Use LLM (Gemini API) if available
+    if (GEMINI_API_KEY) {
+      try {
+        console.log("Attempting to generate questions using LLM (Gemini API)");
+        const questions = await fetchTriviaQuestionsBatchFromGemini(
+          GEMINI_API_KEY,
+          count,
+          typedDifficulty
+        );
 
-    // Validate API key
-    if (!GEMINI_API_KEY) {
-      console.warn(
-        "Gemini API key not configured, using fallback static questions"
-      );
-      // Generate some static questions as fallback
-      const fallbackQuestions = generateFallbackQuestions(count);
-      return NextResponse.json({ questions: fallbackQuestions });
-    }
-
-    // Try to generate questions using Gemini API
-    try {
-      const questions = await fetchTriviaQuestionsBatchFromGemini(
-        GEMINI_API_KEY,
-        count,
-        difficulty as "easy" | "medium" | "hard"
-      );
-
-      // If we got questions, return them
-      if (questions && questions.length > 0) {
-        return NextResponse.json({ questions });
-      } else {
-        // If no questions were generated, use fallback
-        console.warn("No questions generated from API, using fallback");
-        const fallbackQuestions = generateFallbackQuestions(count);
-        return NextResponse.json({ questions: fallbackQuestions });
+        // If we got questions from LLM, return them
+        if (questions && questions.length > 0) {
+          console.log(`Successfully generated ${questions.length} questions from LLM`);
+          return NextResponse.json({ questions, source: "llm" });
+        } else {
+          console.warn("LLM returned empty questions array, trying Supabase fallback");
+        }
+      } catch (llmError) {
+        console.error("Error fetching questions from LLM (Gemini API):", llmError);
+        // Continue to next fallback
       }
-    } catch (apiError) {
-      console.error("Error fetching questions from Gemini API:", apiError);
-      // Use fallback questions if API call fails
-      const fallbackQuestions = generateFallbackQuestions(count);
-      return NextResponse.json({ questions: fallbackQuestions });
+    } else {
+      console.warn("Gemini API key not configured, skipping LLM generation");
     }
+    
+    // Second priority: Use Supabase database if available
+    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+      try {
+        console.log("Attempting to fetch questions from Supabase database");
+        const questions = await fetchTriviaQuestionsFromSupabase(count, typedDifficulty);
+        
+        if (questions && questions.length > 0) {
+          console.log(`Successfully fetched ${questions.length} questions from Supabase`);
+          return NextResponse.json({ questions, source: "supabase" });
+        } else {
+          console.warn("Supabase returned empty questions array, using hardcoded fallback");
+        }
+      } catch (supabaseError) {
+        console.error("Error fetching questions from Supabase:", supabaseError);
+        // Continue to final fallback
+      }
+    } else {
+      console.warn("Supabase configuration not available, skipping database fetch");
+    }
+    
+    // Final fallback: Use hardcoded questions
+    console.warn("Using hardcoded fallback questions as last resort");
+    const fallbackQuestions = generateFallbackQuestions(count);
+    return NextResponse.json({ questions: fallbackQuestions, source: "hardcoded" });
   } catch (error) {
     console.error("Error processing request:", error);
     const fallbackQuestions = generateFallbackQuestions(10);
-    return NextResponse.json({ questions: fallbackQuestions });
+    return NextResponse.json({ questions: fallbackQuestions, source: "hardcoded" });
   }
 }
