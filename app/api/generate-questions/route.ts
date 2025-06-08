@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchTriviaQuestionsBatchFromGemini } from "@/app/lib/gemini-api";
 import { TriviaQuestion } from "@/app/lib/trivia-data";
-import { fetchTriviaQuestionsFromSupabase, createSupabaseClient } from "@/app/lib/supabase-client";
+import {
+  fetchTriviaQuestionsFromSupabase,
+  createSupabaseClient,
+} from "@/app/lib/supabase-client";
 import { v4 as uuidv4 } from "uuid";
 
 // Get API keys and configuration from environment variables
@@ -127,7 +130,7 @@ export async function POST(request: NextRequest) {
   try {
     const { count = 8, difficulty = "medium" } = await request.json();
     const typedDifficulty = difficulty as "easy" | "medium" | "hard";
-    
+
     // First priority: Use LLM (Gemini API) if available
     if (GEMINI_API_KEY) {
       try {
@@ -140,25 +143,29 @@ export async function POST(request: NextRequest) {
 
         // If we got questions from LLM, save generation time to Supabase and return them
         if (result.questions && result.questions.length > 0) {
-          console.log(`Successfully generated ${result.questions.length} questions from LLM in ${result.generationTimeMs}ms`);
-          
+          console.log(
+            `Successfully generated ${result.questions.length} questions from LLM in ${result.generationTimeMs}ms`
+          );
+
           // Save the generation time to Supabase if available
           if (SUPABASE_URL && SUPABASE_ANON_KEY) {
             try {
               const supabase = createSupabaseClient();
-              
+
               // Save metrics
-              await supabase.from('llm_metrics').insert({
-                operation: 'generate_questions',
+              await supabase.from("llm_metrics").insert({
+                operation: "generate_questions",
                 time_ms: result.generationTimeMs,
                 question_count: result.questions.length,
                 difficulty: typedDifficulty,
-                success: true
+                success: true,
               });
-              console.log(`Saved LLM metrics to Supabase: ${result.generationTimeMs}ms for ${result.questions.length} questions`);
-              
+              console.log(
+                `Saved LLM metrics to Supabase: ${result.generationTimeMs}ms for ${result.questions.length} questions`
+              );
+
               // Save the generated questions to the trivia_questions table
-              const questionsToSave = result.questions.map(q => ({
+              const questionsToSave = result.questions.map((q) => ({
                 id: q.id,
                 category: q.category,
                 question: q.question,
@@ -166,88 +173,104 @@ export async function POST(request: NextRequest) {
                 correct_answer: q.correctAnswer,
                 year_indicator: q.yearIndicator,
                 difficulty: typedDifficulty,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
               }));
-              
-              const { data, error } = await supabase
-                .from('trivia_questions')
+
+              const { error } = await supabase
+                .from("trivia_questions")
                 .insert(questionsToSave);
-                
+
               if (error) {
                 console.error("Error saving questions to Supabase:", error);
               } else {
-                console.log(`Successfully saved ${questionsToSave.length} questions to Supabase trivia_questions table`);
+                console.log(
+                  `Successfully saved ${questionsToSave.length} questions to Supabase trivia_questions table`
+                );
               }
             } catch (metricsError) {
               console.error("Error saving data to Supabase:", metricsError);
               // Continue even if saving fails
             }
           }
-          
-          return NextResponse.json({ 
-            questions: result.questions, 
+
+          return NextResponse.json({
+            questions: result.questions,
             source: "llm",
             metrics: {
-              generationTimeMs: result.generationTimeMs
-            }
+              generationTimeMs: result.generationTimeMs,
+            },
           });
         } else {
-          console.warn("LLM returned empty questions array, trying Supabase fallback");
+          console.warn(
+            "LLM returned empty questions array, trying Supabase fallback"
+          );
         }
       } catch (llmError) {
-        console.error("Error fetching questions from LLM (Gemini API):", llmError);
+        console.error(
+          "Error fetching questions from LLM (Gemini API):",
+          llmError
+        );
         // Continue to next fallback
       }
     } else {
       console.warn("Gemini API key not configured, skipping LLM generation");
     }
-    
+
     // Second priority: Use Supabase database if available
     if (SUPABASE_URL && SUPABASE_ANON_KEY) {
       try {
         console.log("Attempting to fetch questions from Supabase database");
-        const questions = await fetchTriviaQuestionsFromSupabase(count, typedDifficulty);
-        
+        const questions = await fetchTriviaQuestionsFromSupabase(
+          count,
+          typedDifficulty
+        );
+
         if (questions && questions.length > 0) {
-          console.log(`Successfully fetched ${questions.length} questions from Supabase`);
-          return NextResponse.json({ 
-            questions, 
+          console.log(
+            `Successfully fetched ${questions.length} questions from Supabase`
+          );
+          return NextResponse.json({
+            questions,
             source: "supabase",
             metrics: {
-              fromDatabase: true
-            }
+              fromDatabase: true,
+            },
           });
         } else {
-          console.warn("Supabase returned empty questions array, using hardcoded fallback");
+          console.warn(
+            "Supabase returned empty questions array, using hardcoded fallback"
+          );
         }
       } catch (supabaseError) {
         console.error("Error fetching questions from Supabase:", supabaseError);
         // Continue to final fallback
       }
     } else {
-      console.warn("Supabase configuration not available, skipping database fetch");
+      console.warn(
+        "Supabase configuration not available, skipping database fetch"
+      );
     }
-    
+
     // Final fallback: Use hardcoded questions
     console.warn("Using hardcoded fallback questions as last resort");
     const fallbackQuestions = generateFallbackQuestions(count);
-    return NextResponse.json({ 
-      questions: fallbackQuestions, 
+    return NextResponse.json({
+      questions: fallbackQuestions,
       source: "hardcoded",
       metrics: {
-        fallback: true
-      }
+        fallback: true,
+      },
     });
   } catch (error) {
     console.error("Error processing request:", error);
     const fallbackQuestions = generateFallbackQuestions(10);
-    return NextResponse.json({ 
-      questions: fallbackQuestions, 
+    return NextResponse.json({
+      questions: fallbackQuestions,
       source: "hardcoded",
       metrics: {
         fallback: true,
-        error: true
-      }
+        error: true,
+      },
     });
   }
 }
