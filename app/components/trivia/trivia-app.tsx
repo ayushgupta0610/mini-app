@@ -13,7 +13,7 @@ export const TriviaApp = () => {
   const {
     questions,
     isComplete,
-    initializeQuiz,
+    // initializeQuiz,
     setUseDynamicQuestions,
     setDifficulty,
   } = useTriviaStore();
