@@ -29,24 +29,37 @@ export const TriviaApp = () => {
     setDifficulty("medium");
   }, [setUseDynamicQuestions, setDifficulty]);
 
-  // Initialize the SDK when app is ready
+  // Initialize the SDK as early as possible
   useEffect(() => {
-    // Only notify ready when we have questions (after welcome screen is dismissed)
-    if (questions.length > 0 && !showWelcome && !sdkInitialized) {
-      const notifyReady = async () => {
-        try {
-          // Use the latest Mini App SDK ready method with disableNativeGestures option
-          await sdk.actions.ready({ disableNativeGestures: false });
-          console.log("Farcaster Mini App SDK ready signal sent");
-          setSdkInitialized(true);
-        } catch (error) {
-          console.error("Error sending ready signal to Farcaster:", error);
-        }
-      };
+    // Always try to initialize the SDK when component mounts
+    const notifyReady = async () => {
+      if (sdkInitialized) return; // Avoid multiple initializations
+      
+      try {
+        // Use the latest Mini App SDK ready method with disableNativeGestures option
+        await sdk.actions.ready({ disableNativeGestures: false });
+        console.log("Farcaster Mini App SDK ready signal sent successfully");
+        setSdkInitialized(true);
+      } catch (error) {
+        console.error("Error sending ready signal to Farcaster:", error);
+        // Even if there's an error, we'll mark as initialized to avoid repeated attempts
+        setSdkInitialized(true);
+      }
+    };
 
-      notifyReady();
-    }
-  }, [questions.length, showWelcome, sdkInitialized]);
+    // Try to initialize immediately
+    notifyReady();
+    
+    // Set a backup timer to ensure SDK is initialized even if there are issues
+    const backupTimer = setTimeout(() => {
+      if (!sdkInitialized) {
+        console.log("Backup SDK initialization triggered");
+        notifyReady();
+      }
+    }, 2000); // 2 second backup
+    
+    return () => clearTimeout(backupTimer);
+  }, [sdkInitialized]);
 
   // Handle URL cleanup if we somehow ended up with /quiz in the URL
   useEffect(() => {

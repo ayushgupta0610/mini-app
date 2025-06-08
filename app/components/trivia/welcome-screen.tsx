@@ -45,27 +45,58 @@ export const WelcomeScreen = ({
 
   const handleStart = async () => {
     setIsStarting(true);
-
+    
     try {
+      // First, try to initialize with static questions to ensure we have something
+      // This is a fallback in case the dynamic questions API fails
+      console.log("Starting quiz initialization...");
+      
       // Initialize the quiz with 8 questions
-      // Use dynamic questions if enabled
+      // Use static questions first if dynamic questions are enabled (we'll try dynamic in the background)
+      const useStatic = useDynamicQuestions;
+      
       await initializeQuiz(8, {
-        useDynamicQuestions,
+        useDynamicQuestions: false, // Start with static questions for speed
         difficulty,
       });
-
-      // Call the onStart callback to update parent component state
+      
+      // Call the onStart callback to update parent component state immediately
+      // This ensures we move past the welcome screen even if there are API issues
       if (onStart) {
+        console.log("Calling onStart callback to proceed to questions");
         onStart();
       }
       
-      // Log success for debugging
-      console.log("Quiz initialized successfully, moving to questions");
+      // If dynamic questions were requested, try to load them in the background
+      if (useStatic) {
+        console.log("Attempting to load dynamic questions in the background...");
+        initializeQuiz(8, {
+          useDynamicQuestions: true,
+          difficulty,
+        }).catch(err => {
+          console.error("Background dynamic questions loading failed:", err);
+          // We already have static questions, so this is non-blocking
+        });
+      }
+      
+      console.log("Quiz initialized successfully with static questions");
     } catch (error) {
-      console.error("Error starting quiz:", error);
-      // Reset loading state on error
-      setIsStarting(false);
-      return;
+      console.error("Error starting quiz with static questions:", error);
+      
+      // Last resort fallback - try with minimal configuration
+      try {
+        await initializeQuiz(5); // Minimal number of questions, default settings
+        
+        if (onStart) {
+          console.log("Using emergency fallback questions");
+          onStart();
+        }
+      } catch (finalError) {
+        console.error("Critical failure in quiz initialization:", finalError);
+        // Reset loading state on critical error
+        setIsStarting(false);
+        return;
+      }
     }
     
     // Set loading to false only on success path

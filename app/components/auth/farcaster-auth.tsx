@@ -1,24 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useTriviaStore } from "@/app/lib/store";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
-import { AlertCircle, LogIn } from "lucide-react";
+import { AlertCircle, LogIn, ExternalLink } from "lucide-react";
 
 export const FarcasterAuth = () => {
   const { setUserData, user, isAuthenticated } = useTriviaStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  
+  // Check if we're running in preview mode
+  useEffect(() => {
+    // Check if we're in a preview environment by looking at the URL
+    const isPreview = window.location.hostname.includes('vercel.app') || 
+                     window.location.hostname.includes('localhost') ||
+                     window.location.href.includes('preview');
+    setIsPreviewMode(isPreview);
+  }, []);
 
   // Check if the Farcaster API is available
   const isFarcasterAvailable = typeof window !== "undefined" && "farcaster" in window;
 
   // Handle Farcaster sign-in
   const handleSignIn = async () => {
-    if (!isFarcasterAvailable) {
+    if (!isFarcasterAvailable && !isPreviewMode) {
       setError("Farcaster API not available. Please use a Farcaster compatible browser or app.");
       return;
     }
@@ -27,23 +37,36 @@ export const FarcasterAuth = () => {
     setError(null);
 
     try {
-      // @ts-expect-error - Farcaster API is not typed
-      const response = await window.farcaster.signIn();
-      
-      if (response && response.success) {
-        // Extract user data from the response
-        const { fid, username, displayName, pfp } = response.user;
-        
-        // Update the store with user data
+      // If in preview mode, use mock data
+      if (isPreviewMode) {
+        // Create mock user data for preview
         setUserData({
-          fid: fid.toString(),
-          username,
-          displayName,
-          pfp,
+          fid: "999999",
+          username: "preview_user",
+          displayName: "Preview User",
+          pfp: "https://avatars.githubusercontent.com/u/1315101?v=4", // Default avatar
           dailyPlays: user.dailyPlays // Keep existing play records
         });
       } else {
-        setError("Failed to sign in with Farcaster. Please try again.");
+        // Normal Farcaster authentication flow
+        // @ts-expect-error - Farcaster API is not typed
+        const response = await window.farcaster.signIn();
+        
+        if (response && response.success) {
+          // Extract user data from the response
+          const { fid, username, displayName, pfp } = response.user;
+          
+          // Update the store with user data
+          setUserData({
+            fid: fid.toString(),
+            username,
+            displayName,
+            pfp,
+            dailyPlays: user.dailyPlays // Keep existing play records
+          });
+        } else {
+          setError("Failed to sign in with Farcaster. Please try again.");
+        }
       }
     } catch (err) {
       console.error("Farcaster sign-in error:", err);
@@ -104,7 +127,7 @@ export const FarcasterAuth = () => {
 
           <Button
             onClick={handleSignIn}
-            disabled={isLoading || !isFarcasterAvailable}
+            disabled={isLoading || (!isFarcasterAvailable && !isPreviewMode)}
             className="w-full"
             size="lg"
           >
@@ -121,10 +144,19 @@ export const FarcasterAuth = () => {
             )}
           </Button>
 
-          {!isFarcasterAvailable && (
+          {!isFarcasterAvailable && !isPreviewMode && (
             <p className="text-center text-sm text-muted-foreground">
               Farcaster API not detected. Please use a Farcaster compatible browser or app.
             </p>
+          )}
+          
+          {!isFarcasterAvailable && isPreviewMode && (
+            <div className="mt-4 p-3 bg-blue-500/10 text-blue-500 rounded-md flex items-start gap-2">
+              <ExternalLink className="h-5 w-5 mt-0.5 flex-shrink-0" />
+              <p className="text-sm">
+                Running in preview mode. Click the button above to continue with a preview account.
+              </p>
+            </div>
           )}
         </motion.div>
       </CardContent>
