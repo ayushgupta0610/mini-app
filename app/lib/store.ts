@@ -138,21 +138,38 @@ export const useTriviaStore = create<TriviaState>()(
           const selectedDifficulty = options?.difficulty ?? difficulty;
 
           // Get questions - either dynamic from API or static
-          const questions = await getRandomQuestions(questionCount, {
+          const newQuestions = await getRandomQuestions(questionCount, {
             useDynamicQuestions: useDynamic,
             difficulty: selectedDifficulty,
           });
 
+          const oldState = get();
+          let newCurrentQuestionIndex = 0;
+          let newScore = 0;
+
+          if (
+            oldState.questions.length > 0 && // Quiz was previously initialized
+            oldState.currentQuestionIndex > 0 && // User had moved past the first question
+            newQuestions.length > 0 && // New questions are available
+            oldState.questions[0]?.id !== newQuestions[0]?.id // And the questions are actually different
+          ) {
+            // This is an update to the question set while quiz was in progress
+            // and user was not on the first question.
+            // Preserve current position and score.
+            newCurrentQuestionIndex = oldState.currentQuestionIndex;
+            newScore = oldState.score;
+          }
+
           set({
-            questions,
-            currentQuestionIndex: 0,
-            answers: Array(questions.length).fill(null),
-            score: 0,
+            questions: newQuestions,
+            currentQuestionIndex: newCurrentQuestionIndex,
+            answers: Array(newQuestions.length).fill(null), // Reset answers for the new question set
+            score: newScore,
             isComplete: false,
             entryYear: null,
             isLoading: false,
             user: {
-              ...user,
+              ...user, // user from the closure, contains dailyPlays updated earlier in this function
               dailyPlays,
             },
           });
@@ -167,18 +184,20 @@ export const useTriviaStore = create<TriviaState>()(
               ? { date: today, count: user.dailyPlays.count + 1 }
               : { date: today, count: 1 };
 
-          const questions = getRandomStaticQuestions(questionCount);
+          const staticFallbackQuestions = getRandomStaticQuestions(questionCount);
 
+          // In a fallback scenario, we typically reset progress.
+          // The user object (including dailyPlays) is from the get() call just before this block.
           set({
-            questions,
+            questions: staticFallbackQuestions,
             currentQuestionIndex: 0,
-            answers: Array(questions.length).fill(null),
+            answers: Array(staticFallbackQuestions.length).fill(null),
             score: 0,
             isComplete: false,
             entryYear: null,
             isLoading: false,
             user: {
-              ...user,
+              ...user, // user from the closure, contains dailyPlays updated earlier in this function
               dailyPlays,
             },
           });
