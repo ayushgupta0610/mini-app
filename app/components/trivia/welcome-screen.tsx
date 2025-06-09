@@ -115,7 +115,7 @@ export const WelcomeScreen = ({
 
   const categories = [
     { name: "Development", icon: "💻" },
-    { name: "Memes/NFTs/Tokens", icon: "🖼️" },
+    { name: "Memes/NFTs", icon: "🖼️" },
     { name: "Scams/Incidents", icon: "🚨" },
     { name: "Crypto Characters", icon: "👤" },
     // { name: "People in Web3", icon: "👤" },
