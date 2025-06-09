@@ -164,12 +164,12 @@ export const QuestionCard = () => {
           </div>
         </div>
         <Progress
-          value={(timeLeft / 5) * 100}
+          value={(timeLeft / 7) * 100}
           className="mb-4"
           indicatorClassName={cn(
             timeLeft < 1
               ? "bg-destructive"
-              : timeLeft <= 5
+              : timeLeft <= 7
               ? "bg-amber-500"
               : "bg-primary"
           )}

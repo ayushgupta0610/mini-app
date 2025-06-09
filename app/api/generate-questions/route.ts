@@ -111,6 +111,28 @@ function generateFallbackQuestions(requestedCount: number): TriviaQuestion[] {
       correctAnswer: 1,
       yearIndicator: 2009,
     },
+    {
+      id: `fallback-${uuidv4().slice(0, 8)}`,
+      category: "development",
+      question: "What is ERC-721?",
+      options: [
+        "A fungible token standard",
+        "A non-fungible token standard",
+        "A governance standard",
+        "A staking standard",
+      ],
+      correctAnswer: 1,
+      yearIndicator: 2018,
+    },
+    {
+      id: `fallback-${uuidv4().slice(0, 8)}`,
+      category: "memes-nfts-tokens",
+      question:
+        "Which meme coin was initially created as a joke but gained significant value?",
+      options: ["Bitcoin", "Ethereum", "Dogecoin", "USD Coin"],
+      correctAnswer: 2,
+      yearIndicator: 2013,
+    },
   ];
 
   // Shuffle and return the requested number

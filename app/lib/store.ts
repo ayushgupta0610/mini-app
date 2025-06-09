@@ -194,8 +194,8 @@ export const useTriviaStore = create<TriviaState>()(
           return false;
         }
 
-        // Check if user has reached the limit of 3 plays per day
-        return user.dailyPlays.count >= 3;
+        // Check if user has reached the limit of 5 plays per day
+        return user.dailyPlays.count >= 5;
       },
 
       setUserData: (userData: Partial<UserData>) => {
