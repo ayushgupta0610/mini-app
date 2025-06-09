@@ -56,7 +56,7 @@ export default function RootLayout({
                 type: "launch_frame",
                 name: "Crypto Trivia",
                 url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
-                splashImageUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/splash-image.png`,
+                splashImageUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`,
                 splashBackgroundColor: "#0a0a0a",
               },
             },
