@@ -11,6 +11,7 @@ export type TriviaQuestion = {
   yearIndicator: number; // Approximate year this knowledge became relevant
 };
 
+// Main array of trivia questions used throughout the app
 export const triviaQuestions: TriviaQuestion[] = [
   // Development Category
   {
@@ -202,7 +203,7 @@ export const triviaQuestions: TriviaQuestion[] = [
     yearIndicator: 2018,
   },
 
-  // Incidents Category
+  // Crypto Characters Category
   {
     id: "incident-1",
     category: "crypto-characters",
@@ -262,7 +263,14 @@ export const triviaQuestions: TriviaQuestion[] = [
   },
 ];
 
-export const getRandomQuestions = (count: number = 8): TriviaQuestion[] => {
+/**
+ * Gets random questions from the static question bank
+ * @param count Number of questions to return
+ * @returns Array of TriviaQuestion objects
+ */
+export const getRandomStaticQuestions = (
+  count: number = 10
+): TriviaQuestion[] => {
   // Ensure we get questions from each category
   const categories = [
     "development",
@@ -277,7 +285,7 @@ export const getRandomQuestions = (count: number = 8): TriviaQuestion[] => {
 
   categories.forEach((category, index) => {
     const categoryQuestions = triviaQuestions.filter(
-      (q) => q.category === category
+      (q: TriviaQuestion) => q.category === category
     );
     const categoryCount =
       index < remainder ? questionsPerCategory + 1 : questionsPerCategory;
@@ -294,6 +302,107 @@ export const getRandomQuestions = (count: number = 8): TriviaQuestion[] => {
 
   // Shuffle the final selection to mix categories
   return selectedQuestions.sort(() => 0.5 - Math.random());
+};
+
+/**
+ * Gets dynamic questions from the server-side API endpoint
+ * Each subsequent question will be from an earlier year based on difficulty
+ * @param count Number of questions to return
+ * @param difficulty Difficulty level (easy, medium, hard)
+ * @returns Promise resolving to array of TriviaQuestion objects
+ */
+export const getDynamicQuestionsFromAPI = async (
+  count: number = 10,
+  difficulty: "easy" | "medium" | "hard" = "medium"
+): Promise<TriviaQuestion[]> => {
+  try {
+    const response = await fetch("/api/generate-questions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ count, difficulty }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Log the source of questions and any metrics
+    if (data.source) {
+      console.log(
+        `%c Questions source: ${data.source}`,
+        "background: #222; color: #bada55; padding: 2px 5px; border-radius: 2px;"
+      );
+
+      // Log additional metrics based on source
+      if (data.source === "llm" && data.metrics?.generationTimeMs) {
+        console.log(
+          `%c LLM generation time: ${data.metrics.generationTimeMs}ms`,
+          "background: #222; color: #ff9; padding: 2px 5px; border-radius: 2px;"
+        );
+      } else if (data.source === "supabase") {
+        console.log(
+          "%c Questions loaded from database",
+          "background: #222; color: #9af; padding: 2px 5px; border-radius: 2px;"
+        );
+      } else if (data.source === "hardcoded") {
+        console.log(
+          "%c Using fallback hardcoded questions",
+          "background: #222; color: #f99; padding: 2px 5px; border-radius: 2px;"
+        );
+        if (data.metrics?.error) {
+          console.log(
+            "%c Error occurred during question generation",
+            "background: #922; color: #fff; padding: 2px 5px; border-radius: 2px;"
+          );
+        }
+      }
+    }
+
+    return data.questions;
+  } catch (error) {
+    console.error("Error fetching questions from API:", error);
+    // Fallback to static questions if API fails
+    console.log(
+      "%c Failed to fetch questions - using static fallback",
+      "background: #922; color: #fff; padding: 2px 5px; border-radius: 2px;"
+    );
+    return getRandomStaticQuestions(count);
+  }
+};
+
+/**
+ * Gets random questions - either from API or static bank
+ * @param count Number of questions to return
+ * @param options Configuration options
+ * @returns Promise resolving to array of TriviaQuestion objects
+ */
+export const getRandomQuestions = async (
+  count: number = 10,
+  options?: {
+    useDynamicQuestions?: boolean;
+    difficulty?: "easy" | "medium" | "hard";
+  }
+): Promise<TriviaQuestion[]> => {
+  const { useDynamicQuestions = false, difficulty = "medium" } = options || {};
+
+  if (useDynamicQuestions) {
+    try {
+      return await getDynamicQuestionsFromAPI(count, difficulty);
+    } catch (error) {
+      console.error(
+        "Failed to get dynamic questions, falling back to static questions:",
+        error
+      );
+      return getRandomStaticQuestions(count);
+    }
+  }
+
+  // Default to static questions
+  return getRandomStaticQuestions(count);
 };
 
 export const calculateCryptoEntryYear = (

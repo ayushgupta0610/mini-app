@@ -5,6 +5,7 @@ import { persist } from "zustand/middleware";
 import {
   TriviaQuestion,
   getRandomQuestions,
+  getRandomStaticQuestions,
   calculateCryptoEntryYear,
 } from "./trivia-data";
 
@@ -39,17 +40,28 @@ interface TriviaState extends PersistedState {
   isComplete: boolean;
   entryYear: number | null;
   hasReachedDailyLimit: boolean;
+  isLoading: boolean;
+  useDynamicQuestions: boolean;
+  difficulty: "easy" | "medium" | "hard";
 
   // Actions
-  initializeQuiz: (questionCount?: number) => void;
+  initializeQuiz: (
+    questionCount?: number,
+    options?: {
+      useDynamicQuestions?: boolean;
+      difficulty?: "easy" | "medium" | "hard";
+    }
+  ) => Promise<void>;
   answerQuestion: (answerIndex: number) => void;
   nextQuestion: () => void;
-  resetQuiz: () => void;
+  resetQuiz: () => Promise<void>;
   calculateResults: () => void;
   setUserData: (userData: Partial<UserData>) => void;
   logoutUser: () => void;
   castScore: () => Promise<boolean>;
   checkDailyLimit: () => boolean;
+  setUseDynamicQuestions: (useDynamic: boolean) => void;
+  setDifficulty: (difficulty: "easy" | "medium" | "hard") => void;
 }
 
 // Get today's date in YYYY-MM-DD format for tracking daily plays
@@ -72,6 +84,9 @@ export const useTriviaStore = create<TriviaState>()(
       score: 0,
       isComplete: false,
       entryYear: null,
+      isLoading: false,
+      useDynamicQuestions: false,
+      difficulty: "medium",
 
       // User state
       user: {
@@ -88,7 +103,15 @@ export const useTriviaStore = create<TriviaState>()(
       hasReachedDailyLimit: false,
 
       // Actions
-      initializeQuiz: (questionCount = 10) => {
+      setUseDynamicQuestions: (useDynamic: boolean) => {
+        set({ useDynamicQuestions: useDynamic });
+      },
+
+      setDifficulty: (difficulty: "easy" | "medium" | "hard") => {
+        set({ difficulty });
+      },
+
+      initializeQuiz: async (questionCount = 10, options) => {
         // Check if user has reached daily limit
         const hasReachedLimit = get().checkDailyLimit();
 
@@ -97,28 +120,69 @@ export const useTriviaStore = create<TriviaState>()(
           return;
         }
 
-        // Update play count for today
-        const { user } = get();
-        const today = getTodayString();
-        const dailyPlays =
-          user.dailyPlays.date === today
-            ? { date: today, count: user.dailyPlays.count + 1 }
-            : { date: today, count: 1 };
+        // Set loading state
+        set({ isLoading: true });
 
-        // Get random questions and initialize quiz
-        const questions = getRandomQuestions(questionCount);
-        set({
-          questions,
-          currentQuestionIndex: 0,
-          answers: Array(questions.length).fill(null),
-          score: 0,
-          isComplete: false,
-          entryYear: null,
-          user: {
-            ...user,
-            dailyPlays,
-          },
-        });
+        try {
+          // Update play count for today
+          const { user, useDynamicQuestions, difficulty } = get();
+          const today = getTodayString();
+          const dailyPlays =
+            user.dailyPlays.date === today
+              ? { date: today, count: user.dailyPlays.count + 1 }
+              : { date: today, count: 1 };
+
+          // Determine if we should use dynamic questions
+          const useDynamic =
+            options?.useDynamicQuestions ?? useDynamicQuestions;
+          const selectedDifficulty = options?.difficulty ?? difficulty;
+
+          // Get questions - either dynamic from API or static
+          const questions = await getRandomQuestions(questionCount, {
+            useDynamicQuestions: useDynamic,
+            difficulty: selectedDifficulty,
+          });
+
+          set({
+            questions,
+            currentQuestionIndex: 0,
+            answers: Array(questions.length).fill(null),
+            score: 0,
+            isComplete: false,
+            entryYear: null,
+            isLoading: false,
+            user: {
+              ...user,
+              dailyPlays,
+            },
+          });
+        } catch (error) {
+          console.error("Error initializing quiz:", error);
+
+          // Fallback to static questions in case of error
+          const { user } = get();
+          const today = getTodayString();
+          const dailyPlays =
+            user.dailyPlays.date === today
+              ? { date: today, count: user.dailyPlays.count + 1 }
+              : { date: today, count: 1 };
+
+          const questions = getRandomStaticQuestions(questionCount);
+
+          set({
+            questions,
+            currentQuestionIndex: 0,
+            answers: Array(questions.length).fill(null),
+            score: 0,
+            isComplete: false,
+            entryYear: null,
+            isLoading: false,
+            user: {
+              ...user,
+              dailyPlays,
+            },
+          });
+        }
       },
 
       checkDailyLimit: () => {
@@ -130,8 +194,8 @@ export const useTriviaStore = create<TriviaState>()(
           return false;
         }
 
-        // Check if user has reached the limit of 10 plays per day
-        return user.dailyPlays.count >= 10;
+        // Check if user has reached the limit of 3 plays per day
+        return user.dailyPlays.count >= 3;
       },
 
       setUserData: (userData: Partial<UserData>) => {
@@ -228,7 +292,7 @@ export const useTriviaStore = create<TriviaState>()(
         }
       },
 
-      resetQuiz: () => {
+      resetQuiz: async () => {
         // Check if user has reached daily limit before resetting
         const hasReachedLimit = get().checkDailyLimit();
 
@@ -237,7 +301,7 @@ export const useTriviaStore = create<TriviaState>()(
           return;
         }
 
-        get().initializeQuiz();
+        await get().initializeQuiz();
       },
 
       calculateResults: () => {

@@ -1,13 +1,13 @@
 import { Metadata } from "next";
 import Image from "next/image";
-import { TriviaApp } from "./components/trivia/trivia-app";
+import { TriviaApp } from "../components/trivia/trivia-app";
 
 export const metadata: Metadata = {
   title: "Crypto Trivia | Farcaster Mini App",
   description: "Do you believe you were early to Web3? Let’s find out.",
 };
 
-export default function Home() {
+export default function QuizPage() {
   return (
     <div className="min-h-screen p-4 md:p-8 flex flex-col items-center justify-center">
       <header className="w-full max-w-md mx-auto flex items-center justify-between mb-6">

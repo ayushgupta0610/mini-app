@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { useTriviaStore } from "@/app/lib/store";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -12,63 +13,182 @@ import {
   CardDescription,
 } from "@/app/components/ui/card";
 import { FarcasterAuth } from "@/app/components/auth/farcaster-auth";
-import { AlertCircle, Play } from "lucide-react";
+import { TriviaSettings } from "./trivia-settings";
+import {
+  AlertCircle,
+  Play,
+  Loader2,
+  Settings,
+  Trophy,
+  Brain,
+  Zap,
+} from "lucide-react";
 
 interface WelcomeScreenProps {
   onStart?: () => void;
+  isLoading?: boolean;
 }
 
-export const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
-  const { initializeQuiz, isAuthenticated, user, checkDailyLimit } =
-    useTriviaStore();
+export const WelcomeScreen = ({
+  onStart,
+  isLoading: externalLoading,
+}: WelcomeScreenProps) => {
+  // const router = useRouter();
+  const {
+    initializeQuiz,
+    isAuthenticated,
+    user,
+    checkDailyLimit,
+    isLoading,
+    useDynamicQuestions,
+    difficulty,
+  } = useTriviaStore();
+  const [isStarting, setIsStarting] = useState(false);
+  // Combine local and external loading states
+  const isButtonLoading = isStarting || isLoading || externalLoading;
+  const [showSettings, setShowSettings] = useState(false);
 
   // Check if user has reached daily limit
   const hasReachedLimit = checkDailyLimit();
 
-  const handleStart = () => {
-    initializeQuiz(8); // Start with 8 questions
-    
-    // Call the onStart callback if provided
-    if (onStart) {
-      onStart();
+  const handleStart = async () => {
+    setIsStarting(true);
+
+    try {
+      // First, try to initialize with static questions to ensure we have something
+      // This is a fallback in case the dynamic questions API fails
+      console.log("Starting quiz initialization...");
+
+      // Initialize the quiz with 8 questions
+      // Use static questions first if dynamic questions are enabled (we'll try dynamic in the background)
+      const useStatic = useDynamicQuestions;
+
+      await initializeQuiz(8, {
+        useDynamicQuestions: false, // Start with static questions for speed
+        difficulty,
+      });
+
+      // Call the onStart callback to update parent component state immediately
+      // This ensures we move past the welcome screen even if there are API issues
+      if (onStart) {
+        console.log("Calling onStart callback to proceed to questions");
+        onStart();
+      }
+
+      // If dynamic questions were requested, try to load them in the background
+      if (useStatic) {
+        console.log(
+          "Attempting to load dynamic questions in the background..."
+        );
+        initializeQuiz(8, {
+          useDynamicQuestions: true,
+          difficulty,
+        }).catch((err) => {
+          console.error("Background dynamic questions loading failed:", err);
+          // We already have static questions, so this is non-blocking
+        });
+      }
+
+      console.log("Quiz initialized successfully with static questions");
+    } catch (error) {
+      console.error("Error starting quiz with static questions:", error);
+
+      // Last resort fallback - try with minimal configuration
+      try {
+        await initializeQuiz(5); // Minimal number of questions, default settings
+
+        if (onStart) {
+          console.log("Using emergency fallback questions");
+          onStart();
+        }
+      } catch (finalError) {
+        console.error("Critical failure in quiz initialization:", finalError);
+        // Reset loading state on critical error
+        setIsStarting(false);
+        return;
+      }
     }
+
+    // Set loading to false only on success path
+    setIsStarting(false);
   };
 
   const categories = [
     { name: "Development", icon: "💻" },
-    { name: "Memes/NFTs/Tokens", icon: "🖼️" },
-    { name: "Scams", icon: "🚨" },
-    { name: "Incidents", icon: "🚨" },
+    { name: "Memes/NFTs", icon: "🖼️" },
+    { name: "Scams/Incidents", icon: "🚨" },
+    { name: "Crypto Characters", icon: "👤" },
     // { name: "People in Web3", icon: "👤" },
   ];
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
+    <Card className="w-full max-w-md mx-auto relative overflow-hidden border-2 border-primary/20 shadow-lg">
+      {/* Background gradient effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-blue-500/5 to-cyan-500/10 z-0"></div>
+
+      {/* Animated particles */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-primary/20"
+            style={{
+              width: Math.random() * 10 + 5,
+              height: Math.random() * 10 + 5,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, Math.random() * -100 - 50],
+              opacity: [0, 0.7, 0],
+            }}
+            transition={{
+              duration: Math.random() * 5 + 5,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+          />
+        ))}
+      </div>
+
+      <CardHeader className="relative z-10">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
+          className="flex flex-col items-center"
         >
-          <CardTitle className="text-2xl text-center">
-            Crypto Trivia Quiz
+          <motion.div
+            className="w-24 h-24 mb-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Brain className="w-12 h-12 text-white" />
+          </motion.div>
+          <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500">
+            Crypto Trivia
           </CardTitle>
-          <CardDescription className="text-center mt-2">
-            Test your crypto knowledge and discover when you should have entered
-            the space!
+          <CardDescription className="text-center mt-2 text-base">
+            Do you believe you were early to Web3? Let’s find out.
           </CardDescription>
         </motion.div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="relative z-10">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <p className="text-center mb-4">
-            Answer questions from these categories:
-          </p>
+          <motion.p
+            className="text-center mb-4 font-medium"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            Challenge yourself in these categories:
+          </motion.p>
 
           <div className="grid grid-cols-2 gap-3">
             {categories.map((category, index) => (
@@ -77,21 +197,27 @@ export const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 + index * 0.1 }}
-                className="bg-accent/50 p-3 rounded-lg text-center"
+                className="bg-gradient-to-br from-primary/20 to-primary/5 backdrop-blur-sm p-4 rounded-xl text-center border border-primary/10 hover:border-primary/30 hover:shadow-md transition-all duration-300"
+                whileHover={{ scale: 1.03 }}
               >
-                <div className="text-2xl mb-1">{category.icon}</div>
+                <div className="text-2xl mb-2">{category.icon}</div>
                 <div className="text-sm font-medium">{category.name}</div>
               </motion.div>
             ))}
           </div>
 
-          <div className="flex items-center justify-center gap-1 mt-4 mb-2">
-            <div className="h-2 w-2 rounded-full bg-primary"></div>
-            <p className="text-center text-sm text-muted-foreground">
-              10 questions • 5 seconds per question • 10 plays per day
+          <motion.div
+            className="flex items-center justify-center gap-2 mt-6 mb-3 bg-primary/10 rounded-full py-2 px-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <Zap className="h-4 w-4 text-primary" />
+            <p className="text-center text-sm font-medium">
+              10 questions • 7 seconds per question • 3 plays per day
             </p>
-            <div className="h-2 w-2 rounded-full bg-primary"></div>
-          </div>
+            <Trophy className="h-4 w-4 text-primary" />
+          </motion.div>
 
           {!isAuthenticated && (
             <motion.div
@@ -138,17 +264,48 @@ export const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
         </motion.div>
       </CardContent>
 
-      <CardFooter>
-        <Button
-          onClick={handleStart}
+      <CardFooter className="relative z-10">
+        <motion.div
           className="w-full"
-          size="lg"
-          disabled={hasReachedLimit}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
         >
-          <Play className="h-5 w-5 mr-2" />
-          Start Quiz
-        </Button>
+          <Button
+            onClick={handleStart}
+            className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-md hover:shadow-lg transition-all duration-300"
+            size="lg"
+            disabled={hasReachedLimit || isButtonLoading}
+          >
+            {isButtonLoading ? (
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                Loading Questions...
+              </>
+            ) : (
+              <>
+                <Play className="h-5 w-5 mr-2" />
+                Start Quiz
+              </>
+            )}
+          </Button>
+        </motion.div>
       </CardFooter>
+
+      {/* Settings Dialog */}
+      <div className="absolute top-4 right-4 z-20">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowSettings(true)}
+          title="Settings"
+          className="bg-background/50 backdrop-blur-sm hover:bg-background/80 transition-all duration-300"
+        >
+          <Settings className="h-5 w-5" />
+        </Button>
+      </div>
+
+      <TriviaSettings open={showSettings} onOpenChange={setShowSettings} />
     </Card>
   );
 };

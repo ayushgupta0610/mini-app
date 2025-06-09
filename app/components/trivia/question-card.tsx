@@ -27,7 +27,7 @@ export const QuestionCard = () => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(5); // 5 seconds per question
+  const [timeLeft, setTimeLeft] = useState(7); // 7 seconds per question
   const [isTimerActive, setIsTimerActive] = useState(true);
   const [timedOut, setTimedOut] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -43,7 +43,7 @@ export const QuestionCard = () => {
     setSelectedOption(null);
     setIsAnswered(false);
     setShowFeedback(false);
-    setTimeLeft(5); // Reset timer to 5 seconds
+    setTimeLeft(7); // Reset timer to 7 seconds
     setIsTimerActive(true);
     setTimedOut(false);
   }, [currentQuestionIndex]);
@@ -112,10 +112,12 @@ export const QuestionCard = () => {
       }
 
       // Determine timing based on answer correctness
-      // 3 seconds for correct answers, 5 seconds for incorrect/timeout
-      const isCorrectAnswer = selectedOption !== null && selectedOption === currentQuestion.correctAnswer;
-      const advanceDelay = isCorrectAnswer ? 3000 : 5000;
-      
+      // 3 seconds for correct answers, 7 seconds for incorrect/timeout
+      const isCorrectAnswer =
+        selectedOption !== null &&
+        selectedOption === currentQuestion.correctAnswer;
+      const advanceDelay = isCorrectAnswer ? 3000 : 7000;
+
       // Set new timer for auto-advance
       autoAdvanceTimerRef.current = setTimeout(() => {
         handleNextQuestion();
@@ -162,12 +164,12 @@ export const QuestionCard = () => {
           </div>
         </div>
         <Progress
-          value={(timeLeft / 5) * 100}
+          value={(timeLeft / 7) * 100}
           className="mb-4"
           indicatorClassName={cn(
             timeLeft < 1
               ? "bg-destructive"
-              : timeLeft <= 5
+              : timeLeft <= 7
               ? "bg-amber-500"
               : "bg-primary"
           )}
@@ -238,7 +240,9 @@ export const QuestionCard = () => {
           >
             {timedOut && (
               <div className="text-center text-destructive mb-2 text-base font-medium flex items-center justify-center gap-2">
-                <span className="inline-flex items-center justify-center bg-destructive text-destructive-foreground w-6 h-6 rounded-full">✗</span>
+                <span className="inline-flex items-center justify-center bg-destructive text-destructive-foreground w-6 h-6 rounded-full">
+                  ✗
+                </span>
                 <span>Time&apos;s up! The correct answer is highlighted.</span>
               </div>
             )}
@@ -259,9 +263,13 @@ export const QuestionCard = () => {
                   className="h-1 w-full absolute bottom-0 left-0 bg-primary/30"
                   initial={{ width: "100%" }}
                   animate={{ width: "0%" }}
-                  transition={{ 
-                    duration: selectedOption !== null && selectedOption === currentQuestion.correctAnswer ? 3 : 5, 
-                    ease: "linear" 
+                  transition={{
+                    duration:
+                      selectedOption !== null &&
+                      selectedOption === currentQuestion.correctAnswer
+                        ? 3
+                        : 5,
+                    ease: "linear",
                   }}
                 />
               </div>
