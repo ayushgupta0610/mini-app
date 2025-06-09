@@ -5,7 +5,7 @@ import { persist } from "zustand/middleware";
 import {
   TriviaQuestion,
   getRandomQuestions,
-  getRandomStaticQuestions,
+
   calculateCryptoEntryYear,
 } from "./trivia-data";
 
@@ -85,7 +85,7 @@ export const useTriviaStore = create<TriviaState>()(
       isComplete: false,
       entryYear: null,
       isLoading: false,
-      useDynamicQuestions: false,
+      useDynamicQuestions: true,
       difficulty: "medium",
 
       // User state
@@ -176,29 +176,28 @@ export const useTriviaStore = create<TriviaState>()(
         } catch (error) {
           console.error("Error initializing quiz:", error);
 
-          // Fallback to static questions in case of error
-          const { user } = get();
-          const today = getTodayString();
-          const dailyPlays =
-            user.dailyPlays.date === today
-              ? { date: today, count: user.dailyPlays.count + 1 }
-              : { date: today, count: 1 };
+          // Error fetching questions. A play was attempted, so update dailyPlays.
+          // The user object for dailyPlays calculation should be the one from the try block's scope if available,
+          // or fetched again if not. Here, 'user' from the try block is not in scope, so we fetch.
+          const { user: currentUserForErrorHandling } = get();
+          const todayOnError = getTodayString();
+          const dailyPlaysOnError =
+            currentUserForErrorHandling.dailyPlays.date === todayOnError
+              ? { date: todayOnError, count: currentUserForErrorHandling.dailyPlays.count + 1 }
+              : { date: todayOnError, count: 1 };
 
-          const staticFallbackQuestions = getRandomStaticQuestions(questionCount);
-
-          // In a fallback scenario, we typically reset progress.
-          // The user object (including dailyPlays) is from the get() call just before this block.
+          // Set questions to empty array to indicate failure to load
           set({
-            questions: staticFallbackQuestions,
+            questions: [],
             currentQuestionIndex: 0,
-            answers: Array(staticFallbackQuestions.length).fill(null),
+            answers: [],
             score: 0,
-            isComplete: false,
+            isComplete: false, // Or true, depending on desired UX for failed load
             entryYear: null,
             isLoading: false,
             user: {
-              ...user, // user from the closure, contains dailyPlays updated earlier in this function
-              dailyPlays,
+              ...currentUserForErrorHandling,
+              dailyPlays: dailyPlaysOnError, // Ensure daily play is counted even on error
             },
           });
         }
@@ -241,25 +240,27 @@ export const useTriviaStore = create<TriviaState>()(
         });
       },
 
-      castScore: async () => {
+      castScore: async (): Promise<boolean> => {
         const { score, questions, entryYear, user } = get();
 
         if (!user.fid) {
-          console.error("User not authenticated");
+          console.error("User not authenticated for casting score.");
           return false;
         }
 
         try {
-          // Prepare the data to be cast
+          // Prepare the data to be sent to the backend to generate frame metadata
           const castData = {
             score,
             totalQuestions: questions.length,
             entryYear,
             fid: user.fid,
             username: user.username,
+            displayName: user.displayName, // Add displayName
+            pfpUrl: user.pfp,          // Add pfpUrl (assuming user.pfp holds the URL)
           };
 
-          // Call the API endpoint to cast the score
+          // Call the API endpoint to get Frame metadata
           const response = await fetch("/api/cast-score", {
             method: "POST",
             headers: {
@@ -269,17 +270,68 @@ export const useTriviaStore = create<TriviaState>()(
           });
 
           if (!response.ok) {
-            throw new Error("Failed to cast score");
+            const errorData = await response.json().catch(() => ({})); // Try to parse error response
+            console.error('Failed to get frame data from API:', response.status, errorData);
+            throw new Error(`Failed to get frame data: ${errorData.error || response.statusText}`);
           }
 
-          return true;
+          const frameApiResponse = await response.json();
+
+          if (!frameApiResponse.success || !frameApiResponse.frame || !frameApiResponse.castText) {
+            console.error('Invalid frame data received from API:', frameApiResponse);
+            throw new Error('Invalid frame data received from API');
+          }
+
+          // At this point, frameApiResponse.frame contains the frame metadata (image, buttons, etc.)
+          // and frameApiResponse.castText contains the suggested text for the cast.
+
+          // The actual casting mechanism depends on the Farcaster client environment.
+          // Below is a placeholder. You'll need to replace this with the specific API
+          // provided by the Farcaster client (e.g., Warpcast, Supercast) or SDK (e.g., Neynar).
+          // Common patterns involve window.neynar.frame.send(), window.farcaster.sendFrameCast(), etc.
+
+          // Ensure this code runs only in the browser
+          if (typeof window !== 'undefined') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if ((window as any).farcasterClient?.sendFrameCast) {
+              // Example: Using a hypothetical farcasterClient that might be injected by the Mini App host
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (window as any).farcasterClient.sendFrameCast({
+                text: frameApiResponse.castText, // Text accompanying the frame
+                embeds: [{ url: frameApiResponse.frame.image }], // The frame itself is an embed
+              });
+              console.log('Frame cast initiated via farcasterClient.sendFrameCast');
+              return true;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } else if ((window as any).parentIFrame?.sendMessage) {
+              // Example: Communicating with a parent iframe (common in some embedded scenarios)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (window as any).parentIFrame.sendMessage({
+                type: 'castFrame',
+                data: {
+                  castText: frameApiResponse.castText,
+                  frame: frameApiResponse.frame,
+                },
+              });
+              console.log('Frame cast message sent to parent iframe.');
+              return true;
+            } else {
+              // Fallback: Log the data and instruct user if no direct casting method is found.
+              console.warn('No direct Farcaster client casting method found. Frame data:', frameApiResponse);
+              alert(`Frame ready! Text: "${frameApiResponse.castText}" Image: ${frameApiResponse.frame.image}. Please cast this manually if your client supports it.`);
+              return true; 
+            }
+          } else {
+            // Running in a non-browser environment (e.g., server-side during SSR/build)
+            console.warn('castScore called in non-browser environment. Skipping client-side cast.');
+            return false;
+          }
+
         } catch (error) {
           console.error("Error casting score:", error);
           return false;
         }
       },
-
-      // Other actions
 
       answerQuestion: (answerIndex: number) => {
         const { currentQuestionIndex, answers, questions } = get();

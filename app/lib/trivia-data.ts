@@ -365,12 +365,8 @@ export const getDynamicQuestionsFromAPI = async (
     return data.questions;
   } catch (error) {
     console.error("Error fetching questions from API:", error);
-    // Fallback to static questions if API fails
-    console.log(
-      "%c Failed to fetch questions - using static fallback",
-      "background: #922; color: #fff; padding: 2px 5px; border-radius: 2px;"
-    );
-    return getRandomStaticQuestions(count);
+    // Re-throw the error to be handled by the caller
+    throw error;
   }
 };
 
@@ -390,15 +386,8 @@ export const getRandomQuestions = async (
   const { useDynamicQuestions = false, difficulty = "medium" } = options || {};
 
   if (useDynamicQuestions) {
-    try {
-      return await getDynamicQuestionsFromAPI(count, difficulty);
-    } catch (error) {
-      console.error(
-        "Failed to get dynamic questions, falling back to static questions:",
-        error
-      );
-      return getRandomStaticQuestions(count);
-    }
+    // Attempt to get dynamic questions. If it throws, the error will propagate up.
+    return await getDynamicQuestionsFromAPI(count, difficulty);
   }
 
   // Default to static questions

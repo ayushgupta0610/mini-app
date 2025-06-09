@@ -81,7 +81,7 @@ export const TriviaApp = () => {
       console.log("Found existing questions, skipping welcome screen");
       setShowWelcome(false);
     }
-  }, []); // Run only once on mount
+  }, [questions, isComplete]);
 
   // Show welcome screen if showWelcome is true
   if (showWelcome) {
