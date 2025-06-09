@@ -10,7 +10,6 @@
     "iconUrl": "https://mini-app-theta-roan.vercel.app/logo.png",
     "homeUrl": "https://mini-app-theta-roan.vercel.app/",
     "imageUrl": "https://mini-app-theta-roan.vercel.app/logo.png",
-    "splashImageUrl": "https://mini-app-theta-roan.vercel.app/splash-image.png",
     "splashBackgroundColor": "#8c66fc",
     "primaryCategory": "games",
     "description": "Do you believe you were early to Web3? Let’s find out.",
@@ -18,7 +17,6 @@
     "tagline": "Early to Web3? Test it!",
     "ogTitle": "Crypto Trivia",
     "ogDescription": "Do you believe you were early to Web3? Let’s find out.",
-    "ogImageUrl": "https://mini-app-theta-roan.vercel.app/splash-image.png",
     "tags": ["crypto", "trivia", "quiz", "games", "farcaster"]
   }
 }
