@@ -214,7 +214,7 @@ export const WelcomeScreen = ({
           >
             <Zap className="h-4 w-4 text-primary" />
             <p className="text-center text-sm font-medium">
-              10 questions • 5 seconds per question • 3 plays per day
+              10 questions • 7 seconds per question • 3 plays per day
             </p>
             <Trophy className="h-4 w-4 text-primary" />
           </motion.div>
