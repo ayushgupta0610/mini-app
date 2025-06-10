@@ -9,7 +9,6 @@
     "name": "Crypto Trivia",
     "iconUrl": "https://mini-app-theta-roan.vercel.app/icon.png",
     "homeUrl": "https://mini-app-theta-roan.vercel.app/",
-    "splashImageUrl": "https://mini-app-theta-roan.vercel.app/splash-image-1.jpeg",
     "splashBackgroundColor": "#8c66fc",
     "primaryCategory": "games",
     "description": "Test your crypto knowledge with this fun trivia quiz",
@@ -17,7 +16,6 @@
     "tagline": "Test your crypto knowledge",
     "ogTitle": "Crypto Trivia",
     "ogDescription": "Do you believe you were early to Web3? Let’s find out.",
-    "ogImageUrl": "https://mini-app-theta-roan.vercel.app/splash-image-1.jpeg",
     "tags": ["crypto", "trivia", "quiz", "games", "farcaster"]
   }
 }
