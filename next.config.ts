@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
       process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
   },
   images: {
-    domains: [`${process.env.NEXT_PUBLIC_BASE_URL}`, "localhost"],
+    domains: ["mini-app-theta-roan.vercel.app", "localhost"],
     formats: ["image/webp"],
   },
   async headers() {
