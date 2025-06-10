@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useTriviaStore } from "@/app/lib/store";
-import { createFrameMessage } from "@/app/lib/farcaster";
 import { Button } from "@/app/components/ui/button";
 import {
   Card,
@@ -13,15 +12,7 @@ import {
   CardTitle,
 } from "@/app/components/ui/card";
 import { FarcasterAuth } from "@/app/components/auth/farcaster-auth";
-import { AlertCircle, RefreshCw, Check, Trophy, AtSign, X } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/app/components/ui/dialog";
+import { AlertCircle, RefreshCw, Check, Trophy } from "lucide-react";
 
 export const ResultsCard = () => {
   const {
@@ -37,8 +28,7 @@ export const ResultsCard = () => {
   const [isCasting, setIsCasting] = useState(false);
   const [castError, setCastError] = useState<string | null>(null);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
-  const [isChallengeDialogOpen, setChallengeDialogOpen] = useState(false);
-  const [friendHandles, setFriendHandles] = useState("");
+  // These states have been removed as part of simplifying the flow
 
   // Calculate percentage score
   const percentage = Math.round((score / questions.length) * 100);
@@ -123,61 +113,39 @@ export const ResultsCard = () => {
   // Get the persona for this score
   const persona = getCryptoPersona();
 
-  // Open challenge dialog
-  const openChallengeDialog = () => {
-    setChallengeDialogOpen(true);
-  };
+  // This function has been removed as part of simplifying the flow
   
   // Handle sharing result to Farcaster
-  const handleShare = () => {
-    openChallengeDialog();
-  };
-
-  // Handle sharing result to Farcaster with friend mentions
-  const handleChallengeFriends = async () => {
+  const handleShare = async () => {
     if (!isAuthenticated) {
-      setChallengeDialogOpen(false);
-      setCastError("Please sign in with Farcaster to challenge your friends");
+      setCastError("Please sign in with Farcaster to share your result");
       return;
     }
 
     setIsCasting(true);
     setCastError(null);
-    setChallengeDialogOpen(false);
 
     try {
-      // Format handles to proper mentions if they don't start with @
-      const formattedHandles = friendHandles
-        .split(/\s*,\s*/)
-        .filter(handle => handle.trim() !== '')
-        .map(handle => handle.trim().startsWith('@') ? handle.trim() : `@${handle.trim()}`)
-        .join(" ");
+      // Create a challenge message
+      const challengeMessage = `I scored ${score}/${questions.length} (${percentage}%) on the Crypto Trivia quiz! Can you beat my score? #CryptoTrivia #Challenge`;
       
-      // Add custom message with mentions
-      const shareText = formattedHandles 
-        ? `Hey ${formattedHandles}, I just scored ${score}/${questions.length} on the Crypto Trivia Quiz! My crypto persona is "${persona.title}" ${persona.emoji}. Can you beat my score? #CryptoTrivia`
-        : `I scored ${score}/${questions.length} on the Crypto Trivia Quiz! My crypto persona is "${persona.title}" ${persona.emoji}. Can you beat my score? #CryptoTrivia`;
+      const success = await castScore(challengeMessage);
       
-      // Use the createFrameMessage function to prepare the frame for casting
-      createFrameMessage(shareText);
-
-      // Call castScore with the custom message
-      const success = await castScore(shareText);
-
       if (success) {
         setShowShareSuccess(true);
-        setTimeout(() => setShowShareSuccess(false), 5000);
+        setTimeout(() => setShowShareSuccess(false), 3000);
       } else {
-        setCastError("Failed to share your challenge. Please try again.");
+        setCastError("Failed to cast your score. Please try again.");
       }
     } catch (error) {
-      console.error("Error challenging friends:", error);
-      setCastError("An unexpected error occurred. Please try again.");
+      console.error("Error sharing result:", error);
+      setCastError("An error occurred while sharing your result.");
     } finally {
       setIsCasting(false);
     }
   };
 
+  // This function has been removed as part of simplifying the flow
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -284,7 +252,7 @@ export const ResultsCard = () => {
           ) : (
             <>
               <Trophy className="h-5 w-5 mr-2" />
-              Challenge Friends
+              Share Result
             </>
           )}
         </Button>
@@ -319,55 +287,7 @@ export const ResultsCard = () => {
         )}
       </CardFooter>
 
-      {/* Challenge Dialog */}
-      <Dialog open={isChallengeDialogOpen} onOpenChange={setChallengeDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Challenge your friends</DialogTitle>
-            <DialogDescription>
-              Mention your friends&apos; Farcaster handles to challenge them to beat your score.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center space-x-2 py-4">
-            <div className="grid flex-1 gap-2">
-              <label htmlFor="friendHandles" className="text-sm text-muted-foreground">Enter Farcaster handles (separated by commas)</label>
-              <div className="flex items-center rounded-md border px-3">
-                <AtSign className="h-4 w-4 text-muted-foreground mr-2" />
-                <input
-                  id="friendHandles"
-                  value={friendHandles}
-                  onChange={(e) => setFriendHandles(e.target.value)}
-                  placeholder="handle1, handle2, handle3"
-                  className="flex-1 py-3 outline-none bg-transparent"
-                />
-                {friendHandles && (
-                  <button 
-                    onClick={() => setFriendHandles('')}
-                    className="p-1 rounded-full hover:bg-muted"
-                    type="button"
-                  >
-                    <X className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="flex justify-between sm:justify-between">
-            <Button
-              variant="outline"
-              onClick={() => setChallengeDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleChallengeFriends}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
-            >
-              Cast Challenge
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* We're removing the Challenge Dialog as we're simplifying the flow */}
     </Card>
   );
 };
