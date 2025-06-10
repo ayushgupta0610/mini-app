@@ -7,8 +7,9 @@
   "frame": {
     "version": "1",
     "name": "Crypto Trivia",
+    "homeUrl": "https://mini-app-theta-roan.vercel.app",
     "iconUrl": "https://mini-app-theta-roan.vercel.app/icon.png",
-    "homeUrl": "https://mini-app-theta-roan.vercel.app/",
+    "splashImageUrl": "https://mini-app-theta-roan.vercel.app/1.png",
     "splashBackgroundColor": "#8c66fc",
     "primaryCategory": "games",
     "description": "Test your crypto knowledge with this fun trivia quiz",
