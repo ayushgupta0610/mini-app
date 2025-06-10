@@ -5,9 +5,88 @@ import { persist } from "zustand/middleware";
 import {
   TriviaQuestion,
   getRandomQuestions,
-
   calculateCryptoEntryYear,
 } from "./trivia-data";
+
+// Helper function to determine crypto persona based on score percentage
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getCryptoPersona = (score: number, totalQuestions: number) => {
+  const percentage = Math.round((score / totalQuestions) * 100);
+  
+  if (percentage >= 90)
+    return {
+      title: "Satoshi Tier",
+      description:
+        "You might be Satoshi himself! Your crypto knowledge is legendary.",
+      emoji: "🧠",
+      badge: "satoshi",
+      color: "from-yellow-400 to-amber-600",
+      rank: "1",
+    };
+  if (percentage >= 80)
+    return {
+      title: "Crypto OG",
+      description:
+        "You've been around since the Bitcoin whitepaper and survived multiple cycles.",
+      emoji: "🦖",
+      badge: "og",
+      color: "from-purple-600 to-blue-600",
+      rank: "2",
+    };
+  if (percentage >= 70)
+    return {
+      title: "Early Adopter",
+      description: "You got in before the masses and have diamond hands.",
+      emoji: "💎",
+      badge: "early",
+      color: "from-blue-500 to-teal-500",
+      rank: "3",
+    };
+  if (percentage >= 60)
+    return {
+      title: "DeFi Wizard",
+      description: "You know your way around protocols and yield farming.",
+      emoji: "🧙",
+      badge: "defi",
+      color: "from-teal-400 to-emerald-500",
+      rank: "4",
+    };
+  if (percentage >= 50)
+    return {
+      title: "NFT Collector",
+      description: "You have an eye for digital art and community.",
+      emoji: "🖼️",
+      badge: "nft",
+      color: "from-emerald-500 to-lime-500",
+      rank: "5",
+    };
+  if (percentage >= 40)
+    return {
+      title: "Degen Trader",
+      description: "High risk, high reward - you live for the volatility.",
+      emoji: "🎰",
+      badge: "degen",
+      color: "from-orange-500 to-amber-500",
+      rank: "6",
+    };
+  if (percentage >= 30)
+    return {
+      title: "Meme Coin Enthusiast",
+      description: "You're in it for the memes and the community.",
+      emoji: "🐕",
+      badge: "meme",
+      color: "from-rose-400 to-pink-500",
+      rank: "7",
+    };
+  return {
+    title: "Crypto Curious",
+    description: "You're just getting started on your crypto journey.",
+    emoji: "🔍",
+    badge: "curious",
+    color: "from-sky-400 to-blue-500",
+    rank: "8",
+  };
+};
 
 // Define a type for tracking daily plays
 interface PlayRecord {
@@ -58,7 +137,7 @@ interface TriviaState extends PersistedState {
   calculateResults: () => void;
   setUserData: (userData: Partial<UserData>) => void;
   logoutUser: () => void;
-  castScore: () => Promise<boolean>;
+  castScore: (customMessage?: string) => Promise<boolean>;
   checkDailyLimit: () => boolean;
   setUseDynamicQuestions: (useDynamic: boolean) => void;
   setDifficulty: (difficulty: "easy" | "medium" | "hard") => void;
@@ -240,7 +319,7 @@ export const useTriviaStore = create<TriviaState>()(
         });
       },
 
-      castScore: async (): Promise<boolean> => {
+      castScore: async (customMessage?: string): Promise<boolean> => {
         const { score, questions, entryYear, user } = get();
 
         if (!user.fid) {
@@ -297,7 +376,7 @@ export const useTriviaStore = create<TriviaState>()(
               // Example: Using a hypothetical farcasterClient that might be injected by the Mini App host
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               await (window as any).farcasterClient.sendFrameCast({
-                text: frameApiResponse.castText, // Text accompanying the frame
+                text: customMessage || frameApiResponse.castText, // Text accompanying the frame
                 embeds: [{ url: frameApiResponse.frame.image }], // The frame itself is an embed
               });
               console.log('Frame cast initiated via farcasterClient.sendFrameCast');
@@ -309,7 +388,7 @@ export const useTriviaStore = create<TriviaState>()(
               (window as any).parentIFrame.sendMessage({
                 type: 'castFrame',
                 data: {
-                  castText: frameApiResponse.castText,
+                  castText: customMessage || frameApiResponse.castText,
                   frame: frameApiResponse.frame,
                 },
               });
@@ -318,7 +397,7 @@ export const useTriviaStore = create<TriviaState>()(
             } else {
               // Fallback: Log the data and instruct user if no direct casting method is found.
               console.warn('No direct Farcaster client casting method found. Frame data:', frameApiResponse);
-              alert(`Frame ready! Text: "${frameApiResponse.castText}" Image: ${frameApiResponse.frame.image}. Please cast this manually if your client supports it.`);
+              alert(`Frame ready! Text: "${customMessage || frameApiResponse.castText}" Image: ${frameApiResponse.frame.image}. Please cast this manually if your client supports it.`);
               return true; 
             }
           } else {
