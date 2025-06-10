@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
 
               // Save the generated questions to the trivia_questions table
               const questionsToSave = result.questions.map((q) => ({
-                id: q.id,
+                id: uuidv4(), // Generate proper UUID for Supabase
                 category: q.category,
                 question: q.question,
                 options: q.options,
