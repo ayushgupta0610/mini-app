@@ -150,7 +150,7 @@ function generateFallbackQuestions(requestedCount: number): TriviaQuestion[] {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { count = 8, difficulty = "medium" } = await request.json();
+    const { count = 10, difficulty = "medium" } = await request.json();
     const typedDifficulty = difficulty as "easy" | "medium" | "hard";
 
     // First priority: Use LLM (Gemini API) if available
